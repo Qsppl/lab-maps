@@ -276,6 +276,801 @@ $(document).ready(function () {
 
 // ...сделали.
 
+$(document).ready(function () {
+    $('body').addClass('specModalBlackout maps-page')
+
+    if (isGuest || isRegistrant) {
+        $('header').hover(function () { $('body').removeClass('modal-open') })
+        $('.form-control--search').click(function () { $(this).focus() })
+        $('header').addClass('position-relative')
+        $('header').css('z-index', '1060')
+        registerMapFingerPrint()
+            .then(() => {
+                if (!isFpOK || localStorage.getItem('gsp') >= guestProjectsAvailable)
+                    showGuestWnd()
+            })
+    }
+
+    if (isAdmin || link_from) {
+        app.showToast(null, 'На карте не отображаются отмененные и введенные в эксплуатацию проекты.', 'info', 'bottom-right')
+    }
+
+    $('#map').css('height', (window.innerHeight - parseInt($('header:eq(0)').css('height'), 10)) + 'px')
+
+    $('.selectize_me').selectize({
+        closeAfterSelect: false,
+        selectOnTab: false,
+        persist: true,
+        plugins: ['remove_button', 'delete_on_click']
+    })
+
+    /** уже нажатые проекты из сторэджа */
+    ymaps.usedProjects = getUsedProjects()
+    if (!ymaps.usedProjects) ymaps.usedProjects = []
+
+    ymaps.ready()
+
+    globalThis.setActiveIcon = function setActiveIcon(type, obj) {
+        if (type === 'cluster') {
+            let foundInCluster = false
+            objectManager.clusters.each((obj) => {
+                obj.features.forEach((feature) => {
+                    if (+feature.id === +get_project_id || clickedObjectId == +obj.id) {
+                        foundInCluster = true
+                        clickedObjectId = +obj.id
+                        clickedObjectType = 'cluster'
+                        objectManager.clusters.setClusterOptions(+obj.id, {
+                            clusterIcons: [{
+                                href: getIconPath('c', null, 'active', feature, isProjectInAnyFolder(feature.id)),
+                                size: clusterIconSizeBig,
+                                fontSize: clusterFontSize,
+                                offset: clusterIconOffsetBig
+                            }]
+                        })
+                        return true
+                    }
+                })
+            })
+            return foundInCluster
+        } else if (type === 'project') {
+            objectManager.objects.each((obj) => {
+                if (+obj.properties.clusterCaption === +get_project_id) {
+                    foundInCluster = true
+                    clickedObjectId = +obj.id
+                    clickedObjectStage = +obj.t
+                    clickedObjectType = 'project'
+                    objectManager.objects.setObjectOptions(obj.id, {
+                        iconImageHref: getIconPath('p', obj.t, 'active', obj, isProjectInAnyFolder(+obj.properties.clusterCaption)),
+                        iconImageSize: clusterIconSizeBig,
+                    })
+                    return
+                }
+            })
+        } else if (type === 'zone') {
+            zonesModel.objectManager.objects.each((obj) => {
+                if ((obj.id == +get_zone_id) && !balloon.isOpen() && needOpenBaloon) {
+                    needOpenBaloon = false
+                    balloon.open(
+                        obj.geometry.coordinates,
+                        '<div style="margin: 0 0 5px;font-size: 120%;font-weight: 700;">'
+                        + obj.properties.balloonContentHeader
+                        + '</div>'
+                        + obj.properties.balloonContent
+                    )
+                }
+            })
+            console.log(+get_zone_id)
+        }
+    }
+
+    let filter_resetting = false
+
+    if (firstLoadFolders.length) {
+        appLoadScreen.loading()
+        setTimeout(() => {
+            for (let f of firstLoadFolders) {
+                $('.folders_item[data-id="' + f + '"]').find('input').prop('checked', true)
+                selectedFoldersProjects = selectedFoldersProjects.concat($('.folders_item[data-id="' + f + '"]').data('projects_ids'))
+            }
+            $('#slideFoldersCnt').trigger('click')
+            applyFilter([appLoadScreen.hide])
+        }, 0)
+    }
+
+    const counterPopup = $('#apply_filter_popup')
+
+    const map_div = $('#map').append($('#filter_wrap_cnt'), $('#filter_preview_wrap_cnt'))
+
+    $('#filter_preview_wrap_cnt').append(toggleFilterBtn)
+    $('#filter_preview_wrap_cnt').append(totalSummBox)
+    $('.toggle-filter-btn').append(arrowPic)
+    $('#filter_preview_wrap_cnt').append(filterLayers)
+    $('#filter_preview_cnt').append(
+        $('<div>', { 'id': 'search_screen_summ_cnt' })
+            .append(searchBoxCnt)
+    ).show()
+
+    if (isDemo) demoWarningBlock.appendTo(map_div)
+
+    if (isGuest) guestWarningBlock.appendTo(map_div)
+
+    let hideSearch = 'd-none'
+
+    if (get_searchword && get_searchword.length > 1) hideSearch = ''
+
+    const searchCnt = $('<div>', { id: 'filter_projects_pack_cnt', class: hideSearch })
+        .appendTo($('#map'))
+        .show()
+
+    $('<input>', { type: 'text', id: 'filter_projects_pack_input', class: 'form-control', placeholder: ' Введите ID проекта' }).val(get_searchword || '')
+        .appendTo(searchCnt)
+
+    const cross = '<button type="button" class="close clear_search_field"><span aria-hidden="true">×</span></button>'
+
+    $(cross).appendTo(searchCnt)
+
+    $('<button>', { class: 'btn btn-sm btn-default', id: 'filter_projects_pack_btn' })
+        .text((app.languageLocale === 'en' ? 'Search' : 'Найти проекты'))
+        .appendTo(searchCnt)
+
+    loadProdAddressPanel(companyProdAddresses)
+
+
+    $('#map').on('wheel', function (e) {
+        const currentZoom = map.getZoom()
+        const wheelD = e.originalEvent.wheelDelta < 0
+
+        if (wheelD && currentZoom <= minZoom) {
+            app.showToast(app.t('Максимальное отдаление карты'), null, 'info', 'bottom-right')
+        } else if (isZoomRestricted) {
+            let toastText = app.languageLocale === 'en' ? 'Zooming is limited due to the end of the limits of working with the card' : 'Увеличение ограничено из-за окончания лимитов работы с картой'
+
+            if (isRegistrant) {
+                toastText = app.languageLocale === 'en' ? 'For a bigger zoom, subscribe or get demo access' : 'Для большего увеличения оформите подписку или получите демо-доступ'
+            } else if (isGuest) {
+                toastText = app.languageLocale === 'en' ? 'Zooming is limited for unregistered users' : 'Масштабирование ограничено для незарегистрированных пользователей'
+            }
+
+            if (currentZoom >= maxRestrictedZoom) {
+                app.showToast(toastText, null, 'error', 'bottom-right')
+            }
+        }
+    })
+
+    searchBox.on('keyup', function (e) {
+        e.preventDefault()
+        const me = $(this)
+        const val = $.trim(me.val())
+
+        if (val == '') return
+
+        if (e.keyCode == 13) $('#search_button').click()
+    })
+
+    $('body').on('click', '.project_to_folder_btn', function () {
+        window.folder_project = $(this).data('project_id')
+    }).on('click', '.add-to-folder-ok', function () {
+        let folder = $('[name=folders]:checked').val()
+        $.ajax({
+            method: 'POST',
+            url: app.en_prefix + '/ajax/projects/add_to_folder',
+            data: {
+                projects: [window.folder_project],
+                folder: folder
+            },
+            success: function (data) {
+                app.showToast('Проект добавлен в папку', '', 'success', 'bottom-center')
+            }
+        })
+    }).on('change', '.seen_chbx_switch', function () {
+        appLoadScreen.loading()
+        setTimeout(() => {
+            seenVisible = !$(this).prop('checked')
+            applyFilter([appLoadScreen.hide])
+        }, 0)
+    }).on('click', '.folder_chbx_label', function () {
+        appLoadScreen.loading()
+        setTimeout(() => {
+            gatherSelectedFoldersProjects()
+            applyFilter([appLoadScreen.hide])
+            totalSummRecount()
+        }, 0)
+    })
+
+    $('body').on('click', '.exclude_folders', function () {
+        onlyFolders = false
+
+        if ($('.only_folders input').prop('checked')) {
+            $('.only_folders input').prop('checked', false)
+        }
+        excludeFolders = !!$(this).find('input').prop('checked')
+        applyFilter()
+    }).on('click', '.only_folders', function () {
+        excludeFolders = false
+
+        if ($('.exclude_folders input').prop('checked')) {
+            $('.exclude_folders input').prop('checked', false)
+        }
+        onlyFolders = !!$(this).find('input').prop('checked')
+        applyFilter()
+    })
+
+
+    $('body').on('click', '.expand', function () {
+        const me = $(this)
+        const opened = me.data('first_opened')
+
+        if (opened === 1) {
+            me.data('first_opened', 0)
+            $('.hidden_c').addClass('hidden_legend')
+            $(this).css('background', 'url("https://investprojects.info/web/img/map/icons/dots.png") no-repeat center')
+        } else {
+            me.data('first_opened', 1)
+            $('.hidden_c').removeClass('hidden_legend')
+            $(this).css('background', 'url("https://investprojects.info/web/img/map/icons/arrow.png") no-repeat center')
+        }
+    }).on('click', '.filter_preview_search', function () {
+        if (isGuest) {
+            $('#no-access').modal('show')
+            return
+        }
+        $('#filter_projects_pack_cnt').toggleClass('d-none')
+    }).on('keyup', '#filter_projects_pack_input', function (e) {
+        if (e.keyCode == 13) {
+            e.preventDefault()
+            $('#filter_projects_pack_btn').click()
+        }
+    }).on('click', '#filter_projects_pack_btn', function (e) {
+        const searchField = $('#filter_projects_pack_input')
+        const searchText = searchField.val().trim()
+        appLoadScreen.loading()
+        e.preventDefault()
+
+        if (searchText < 2) {
+            search_projects = []
+            projects_to_map = []
+            applyFilter()
+            appLoadScreen.hide()
+        } else {
+            $.get('/search/search?search=' + searchText + '&searchtype=map')
+                .done(function (response) {
+                    const projects = JSON.parse(response)
+
+                    if (typeof projects.single_project !== 'undefined') {
+                        search_projects = [projects.id]
+                        get_project_id = +projects.id
+                        map.setZoom(8)
+                        map.setCenter([projects.coords[0], projects.coords[1]])
+
+                        if (!setActiveIcon('cluster')) setActiveIcon('project')
+                        appLoadScreen.hide()
+                    } else {
+                        search_projects = projects
+                        applyFilter()
+                        appLoadScreen.hide()
+                    }
+                })
+                .fail(function () {
+                    appLoadScreen.hide()
+                })
+                .always(function () {
+                    appLoadScreen.hide()
+                })
+        }
+        return false
+    }).on('click', '#projects_wnd_showmore', function () {
+        //"показать еще" в окне проектов кластера
+        const me = $(this)
+        $.ajax({
+            type: 'POST',
+            url: app.en_prefix + '/ajax/ymaps/get-additional-projects',
+            data: {
+                already_rendered: me.data('loaded_ids'),
+                all_ids: me.data('all_ids')
+            },
+            success: function (response) {
+                if (response) response = JSON.parse(response)
+                response = response.data
+                renderedCustomControl.projects = renderedCustomControl.projects.concat(response.projects)//объединяем отрендеренные проекты и те, которые рендерим сейчас
+                renderedCustomControl._$content.html(getProjectsString(renderedCustomControl))
+                appLoadScreen.hide()
+            }
+        })
+    })
+
+    //FILTERS
+    $('body').on('click', '.filter_preview', function () {
+        if (isGuest) {
+            $('#no-access').modal('show')
+            return
+        }
+        showFilter($(this))
+    })
+
+    $('body').on('change', '.filter_select', function () {
+        if (filter_resetting) {
+            filter_resetting = false
+            return
+        }
+        const me = $(this)
+        const val = me.val()
+        const num = val.length
+        const type = me.data('name')
+        window['selected_' + type] = val
+        let rl = window[type + '_global'].length
+        setLVRV(num, rl, type, true)
+    }).on('click', '.reset_filter', function () {
+        filter_resetting = true
+        const me = $(this)
+        const select = me.parents('.filter').find('select')
+        const type = select.data('name')
+        const num = window[type + '_global'].length
+        select[0].selectize.clear()
+        window['selected_' + type] = window[type + '_global'].map((st) => +st.id)
+        setLVRV(0, num, type, true)
+    }).on('click', '.apply-filter, #apply_filter_popup', function (e) {
+        e.preventDefault()
+        $('#save_filters_button').click()
+        counterPopup.hide()
+        hideFilters()
+        totalSummRecount()
+    }).on('click', '.custom-checkbox', function () {
+        if (!counterPopup[0]) return
+        const clickedLi = $(this).closest('li')
+
+        if ($(this).closest('.left-filter-item').height() > $(this).closest('.filter_data').height()) {
+            counterPopup.show()
+            counterPopup[0].style.top = $(this).offset().top - 7 + 'px'
+            counterPopup[0].style.left = clickedLi.offset().left + clickedLi.width() + 15 + 'px'
+        }
+    }).on('click', '#save_filters_button', function () {//SAVE FILTERS CLICK
+        appLoadScreen.loading()
+        const isOpenedFilterRegion = $('#wnd_filter_container').find('#region_filter')//если открыт именно фильтр по регионам
+        setTimeout(() => {
+            // appLoadScreen.loading()
+            removeProjectInfoCnt(renderedCustomControl)
+            removeActiveIcon()
+            resetRecounter()
+
+            if (isOpenedFilterRegion.length) {
+                map.regionChanged = true
+                const regions = getFilters().region
+                document.getElementById('country_filter').selectize.setValue([app.rusId])
+
+                if (regions.length > 1) {
+                    moveMapToCenter()
+                    map.regionChanged = false
+                } else if (regions.length === 1) {
+                    $.post('/ajax/ymaps/get-region-coordinates', { region: regions[0] })
+                        .done(function (res) {
+                            res = JSON.parse(res).data
+                            moveMapToRegion(res.map_x, res.map_y)
+                            map.regionChanged = false
+                        })
+                        .fail(function (e) {
+                            console.warn(e)
+                        })
+                }
+            } else {
+                getFilters()
+                applyFilter([() => {
+                    totalSummRecount()
+                    appLoadScreen.hide()
+                }])
+            }
+        }, 10)
+    })
+
+    $('body').on('click', '#ymapSearchInput', function (e) {
+        if (isGuest) {
+            $('#no-access').modal('show')
+            e.preventDefault()
+            return false
+        }
+    }).on('click', '#search_button', function () {
+        if (isGuest) {
+            $('#no-access').modal('show')
+            return
+        }
+        let val = $('#ymapSearchInput').val()
+
+        if (val == '' || isDemo) return false
+        removeProjectInfoCnt(renderedCustomControl)
+        ymaps.geocode(val, {
+            results: 1
+        }).then(function (res) {
+            const firstGeoObject = res.geoObjects.get(0)
+            if (!firstGeoObject) return
+            const coords = firstGeoObject.geometry.getCoordinates()
+            map.setZoom(8)
+            map.setCenter([coords[0], coords[1]])
+            setMapPoint(ymaps.Placemark, coords, 'islands#blueIcon', 'blue', res.metaData.request)
+        }).catch(function (err) {
+            console.log(err)
+        })
+    }).on('click', '.close_project_info_cnt', function () {
+        removeProjectInfoCnt(renderedCustomControl)
+        removeActiveIcon()
+        $('.autoSelectedRegion').removeClass('autoSelectedRegion--projectResponsive')
+    }).on('click', '.wh__panel_name', function () {
+        let me = $(this)
+        const coords = me.data('coordinates')
+        const map_x = coords.map_x
+        const map_y = coords.map_y
+
+        if (map_x && map_y) {
+            map.setZoom(8)
+            map.setCenter([map_x, map_y])
+        }
+    }).on('keyup', '.wh__radius_input', function () {
+        const me = $(this)
+        const id = me.data('id')
+        const val = +me.val()
+
+        if (val > 500) {
+            alert('Не больше 500км')
+            me.val(500)
+            return
+        }
+        g_warehouses_pm.forEach(wh_placemark => {
+            if (wh_placemark.wh_id == id) {
+                currentTypingRadius = val
+                wh_placemark.events.fire('click')
+            }
+        })
+    }).on('click', '.wh_panel__plus_button, .edit_wh', function () {
+        const proj_container = $('#prod_addr_container')
+
+        if (proj_container.hasClass('d-none')) proj_container.removeClass('d-none')
+        else proj_container.addClass('d-none')
+    }).on('click', '#reload_map_prodaddr', function () {
+        $.ajax({
+            type: 'POST',
+            url: app.en_prefix + '/ajax/ymaps/get-company-prod-address',
+            data: { company_id: $('#company_id').val() },
+            success: function (response) {
+                const data = JSON.parse(response)
+                const companyProdAddresses = data.data
+                $('#prod_addr_container').addClass('d-none')
+
+                if (companyProdAddresses && companyProdAddresses.length > 0) {
+                    loadProdAddressPanel(companyProdAddresses)
+                    addWHToTheMap(companyProdAddresses, ymaps.Placemark)
+                }
+            }
+        })
+    }).on('click', '#slideAddressCnt', function () {
+        let me = $(this)
+        let opened = me.data('opened')
+
+        if (opened == 1) {
+            $('#ymapWhPanel').animate({ right: '-400px' }, 300)
+            me.data('opened', 0)
+            me.find('i').removeClass('wh-panel-toggler__active')
+        } else {
+            $('#ymapWhPanel').animate({ right: '0px' }, 300)
+            me.data('opened', 1)
+            me.find('i').addClass('wh-panel-toggler__active')
+        }
+    }).on('click', '#slideFoldersCnt', function () {
+        let me = $(this)
+        let opened = me.data('opened')
+
+        if (opened == 1) {
+            $('#ymapFoldersPanel').animate({ right: '-250px' }, 300)
+            me.data('opened', 0)
+            me.find('i').removeClass('wh-panel-toggler__active')
+        } else {
+            $('#ymapFoldersPanel').animate({ right: '0px' }, 300)
+            me.data('opened', 1)
+            me.find('i').addClass('wh-panel-toggler__active')
+        }
+    }).on('click', '.close_window', function () {
+        hideFilters()
+    }).on('click', '.select_all_filter', function () {
+        const me = $(this)
+        const selectize = me.siblings('.row').find('#wnd_filter_container').find('select')[0].selectize
+        const opts = selectize.options
+        const selected = []
+        Object.keys(opts).map(function (objectKey, index) {
+            var obj = opts[objectKey]
+            selected.push(+obj.value)
+        })
+        selectize.setValue(selected)
+    }).on('click', '.ymap__ymap_go_proj_base_btn1__wrapper', function (e) {
+        e.preventDefault()
+        let href = app.en_prefix + '/project-base?'
+            + 'filter[gos]=' + getSelectedIds('gos').join('%2C')
+            + '&filter[sectors]=' + getSelectedIds('sector').join('%2C')
+            + '&filter[stages]=' + getSelectedIds('stage').join('%2C')
+            + '&filter[regions]=' + (getSelectedIds('region').join('%2C')
+                ? getSelectedIds('region').join('%2C')
+                : 'all'
+            )
+            + '&filter[fos]=' + getSelectedIds('gos').join('%2C')
+            + '&filter[folders]=&filter[contacts]=&filter[search]=&filter[date_start]=&filter[date_end]=&filter[pr_start_1]=&filter[pr_start_2]=&filter[pr_end_1]=&filter[pr_end_2]='
+            + '&filter[products]=&filter[subproducts]=&sort=&user=&filter[countries]=all'
+        window.open(href, '_blank')
+        return false
+
+        function getSelectedIds(type) {
+            return window['selected_' + type]
+        }
+    }).on('click', '.clear_search_field', function () {
+        const searchField = $(this).siblings('input')
+        searchField.val('')
+        search_projects = []
+        $('#filter_projects_pack_btn').click()
+        $('.filter_preview_search').click()
+    }).on('click', '.wh_panel__find_products_button', function () {
+        findProductsQuery()
+    }).on('click', '.autoSelectedRegion .close', function () {
+        borders_onMap.removeFromMap(map)
+        $('.autoSelectedRegion').hide()
+        $('[data-type="regions"]').prop('checked', true)
+        $('[data-type="regions"]').trigger('change')
+        getFilters()
+        objectManager.setFilter(function (elem) {
+            return true
+        })
+        totalSummBox.text(totalProjects)
+    })
+
+    $('body').on('click', '.toggle-filter-btn', function () {
+        $('#filter_preview_cnt').toggleClass('slide-in-left')
+        $('#filter_preview_cnt').toggleClass('slide-out-left')
+        $('.toggle-filter-btn').toggleClass('toggle-filter-btn--filter-hidden')
+        $('#ymapTotalSummDiv').toggleClass('total-summ-div--filter-hidden')
+        $('#filter_layers').toggleClass('filter-layers--filter-hidden')
+    })
+
+    filterLayers.click(function () {
+        $(this).toggleClass('active')
+    })
+
+    function loadCompanies() {
+        let featuresDataSet = { type: "FeatureCollection", features: [] }
+
+        $.ajax({
+            type: 'POST',
+            url: app.en_prefix + '/ajax/ymaps/companies',
+            success: function (response) {
+                const data = JSON.parse(response).data
+                featuresDataSet.features = companyModel.makeFeatures(data.companies)
+                companyModel.objectManager.add(featuresDataSet)
+                appLoadScreen.hide()
+            },
+            error: function () {
+                appLoadScreen.hide()
+                window.nowLoading = false
+            }
+        })
+    }
+
+    function editPolygon(polygon, editingZones) {
+        polygon.events.add('click', function (e) {
+            if (e.originalEvent.domEvent.originalEvent.ctrlKey) {
+                $('#formpolygonedit .industrial_name').text(polygon.properties.get("hintContent"))
+
+                if (!editingZones) {
+                    $('#formpolygonedit').removeClass('d-none')
+                    $('#industrial_name option:selected')
+                    $('#industrial_name option[value=' + polygon.properties.get("myID") + ']').prop('selected', true)
+                    window.active_polygon = polygon
+                    polygon.editor.startDrawing()
+                    editingZones = true
+                } else {
+                    $('#formpolygonedit').addClass('d-none')
+                    window.active_polygon = false
+                    polygon.editor.stopEditing()
+                    editingZones = false
+                    let coordinates = polygon.geometry.getCoordinates()
+                    let zoneData = {
+                        coordinates: coordinates,
+                        options: {
+                            fillColor: polygon.options.get("fillColor"),
+                            strokeColor: polygon.options.get("strokeColor"),
+                            fillOpacity: polygon.options.get("fillOpacity")
+                        }
+                    }
+                    $.ajax({
+                        type: 'POST',
+                        url: '/ajax/industrials/save-coords',
+                        data: {
+                            industrialId: polygon.properties.get("myID"),
+                            coordinates: JSON.stringify(zoneData)
+                        },
+                        success: function (response) {
+                            console.log(response)
+                        }
+                    })
+                }
+            }
+        })
+    }
+
+    function setMapPoint(type, coordinates, preset, color, caption) {
+        searchMarks.forEach((mark) => { map.geoObjects.remove(mark) })
+        const searchMark = new type(
+            [coordinates[0], coordinates[1]],
+            { hasBalloon: false, iconCaption: caption },
+            { preset: preset, iconCaptionMaxWidth: '250', iconColor: color }
+        )
+        map.geoObjects.add(searchMark)
+        searchMarks.push(searchMark)
+    }
+
+    function hideFilters() {
+        $('.filter_data').hide()
+    }
+
+    function showFilter(target) {
+        const filterData = target.next()
+        $('.filter_data').not(filterData).hide()
+        filterData.css('left', target.position().left)
+        filterData.fadeToggle(100)
+    }
+
+    function gatherSelectedFoldersProjects() {
+        selectedFoldersProjects = []
+        $('.folders_item')
+            .filter(function () {
+                return $(this).find('input').prop('checked')
+            })
+            .each(function () {
+                selectedFoldersProjects = selectedFoldersProjects
+                    .concat($(this).data('projects_ids'))
+            })
+    }
+
+    function loadProdAddressPanel(companyProdAddresses) {
+        wh_panelBody = $('<div>')
+
+        if (companyProdAddresses) {
+            companyProdAddresses.forEach((this_wh, i) => {
+                const data = {
+                    coordinates: { map_x: this_wh.map_x, map_y: this_wh.map_y },
+                    id: this_wh.id
+                }
+                const typeName = '<b style="margin-right: 5px;">' + (i + 1) + '. ' + (this_wh.typeData ? '' + this_wh.typeData.name : (address + ' ' + (i + 1))) + '</b>'
+                const editImg = '<img class="edit_wh" src="https://investprojects.info/web/img/map/edit.png">'
+
+                $('<div>', { class: 'wh__panel_line' })
+                    .data('wh_id', this_wh.id)
+                    .append(
+                        $('<div>', { class: 'wh__panel_name' }).html(typeName + editImg).data(data),
+                        $('<div>', { class: 'wh__panel_address' }).html(this_wh.prod_address),
+                        $('<div>', { class: 'wh_cnt' }).append(
+                            $('<input>', { type: 'text', class: 'form-control mt-1 mb-3 form-control-sm wh__radius_input', placeholder: radiusKm })
+                                .data(data),
+                            isAdmin
+                                ? $('<input>', { type: 'text', class: 'form-control mt-1 mb-3 form-control-sm wh__product_input', placeholder: products })
+                                    .data('wh_id', this_wh.id)
+                                : null
+                        )
+                    )
+                    .appendTo(wh_panelBody)
+            })
+        }
+
+        if (!isGuest) {
+            let spanClass = 'wh_panel__plus_button'
+            let dataString = ''
+
+            if (isRegistrant) {
+                spanClass = ''
+                dataString = 'data-toggle = "modal" data-target = "#no-access"'
+            }
+            let showProducts = false
+
+            if (isAdmin) showProducts = $('<div>')
+                .html('<b class="wh_panel__find_products_button btn btn-sm btn-success mt-2" ' + dataString + '> ' + findProducts + '</b>')
+            wh_control_panel.empty()
+                .appendTo(map_div)
+                .append(
+                    $('<div>', { class: 'wh__panel_button ' + app.languageLocale, id: 'slideAddressCnt' })
+                        .html((app.languageLocale === 'en' ? 'Locations' : 'Адреса') + '<i class="wh-panel-toggler transition-all"></i>'),
+                    $('<div>', { class: 'wh_panel_subcontainer' })
+                        .append(
+                            $('<div>', { class: 'wh__panel_header' })
+                                .html('<h4> ' + myAddresses + '</h4>'),
+                            $('<div>', { class: 'wh__panel_body' })
+                                .append(
+                                    wh_panelBody,
+                                    $('<div>')
+                                        .html('<span class="' + spanClass + '" ' + dataString + '><b class="btn btn-sm btn-default">+ ' + addLocation + '</b></span>'),
+                                    showProducts,
+                                )
+                        )
+                )
+            folders_control_panel.empty()
+                .appendTo(map_div)
+                .append(
+                    $('<div>', { class: 'wh__panel_button', id: 'slideFoldersCnt' })
+                        .html((app.languageLocale === 'en' ? 'Folders' : 'Папки') + '<i class="wh-panel-toggler transition-all"></i>'),
+                    $('<div>', { class: 'wh_panel_subcontainer' })
+                        .append(
+                            $('#folders_container'),
+                            $('<div>', { class: 'wh__panel_header wh__panel_header2' })
+                                .html('<h5> ' + seenChbx + '</h5>'),
+                            $('#seen_checkbox_container')
+                        )
+                )
+
+        }
+    }
+
+    function whPlacemarkClick(e) {
+        /** клик на иконке склада */
+        const clicked_wh = e.get('target')
+
+        // показываем круг с заданным радиусом
+        // уберем радиус, если он уже раньше был установлен
+        g_warehouses_circles.forEach((this_radius, index) => {
+            if (this_radius.wh_id === clicked_wh.wh_id) {
+                g_warehouses_circles = g_warehouses_circles.filter((rad) => {
+                    return rad.wh_id !== clicked_wh.wh_id
+                })
+                map.geoObjects.remove(this_radius)
+                return
+            }
+        })
+
+        if (currentTypingRadius) {
+            const coords = e.get('target').geometry.getCoordinates()
+            map.setCenter(coords)
+            const color = `rgba(${random(0, 255)}, ${random(0, 255)}, ${random(0, 255)}, 0.27)`
+            const warehouseRadius = getCircle(coords, currentTypingRadius, color)
+            $('.wh__radius_input').each(function () {
+                if ($(this).data('id') == clicked_wh.wh_id) {
+                    $(this).css('background-color', color)
+                }
+            })
+            warehouseRadius.wh_id = clicked_wh.wh_id
+            g_warehouses_circles.push(warehouseRadius)//глобальный массив кликнутых кругов-радиусов
+            map.geoObjects.add(warehouseRadius)
+        }
+    }
+
+    function addWHToTheMap(companyProdAddresses, Placemark) {
+        g_warehouses_pm.forEach((old_wh) => { map.geoObjects.remove(old_wh) })
+        g_warehouses_pm = []
+        //добавляем склады/производства на карту
+        companyProdAddresses.forEach((addr, index) => {
+            const this_wh_pm = new Placemark(
+                [addr.map_x, addr.map_y],
+                {
+                    hasBalloon: true,
+                    balloonContentHeader: '',
+                    balloonContentBody: '',
+                    iconCaption: ''
+                },
+                {
+                    preset: 'islands#blueDotIcon',
+                    iconCaptionMaxWidth: '250',
+                    iconColor: '#29659f',
+                })
+            this_wh_pm.wh_id = addr.id //запишем ид склада прямо в плэйсмарк
+
+            this_wh_pm.events.add(['click'], whPlacemarkClick)
+            map.geoObjects.add(this_wh_pm)
+            g_warehouses_pm.push(this_wh_pm)// глобальный массив плэйсмарков складов
+        })
+
+        setTimeout(() => {
+            if (screen.width > 480) $('.expand').click()
+        }, 50)
+
+        $('#map').click(function () {
+            const exp = $('.expand')
+            if (exp.data('first_opened') == 0) {
+                exp.data('first_opened', 1)
+                exp.click()
+            }
+        })
+    }
+})
+
 function arrayColumn(arr, n) {
     return arr.map((x, i) => {
         if (i == 0) return x[n]
