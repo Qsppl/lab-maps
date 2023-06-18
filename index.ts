@@ -308,8 +308,6 @@ $(document).ready(function () {
     ymaps.usedProjects = getUsedProjects()
     if (!ymaps.usedProjects) ymaps.usedProjects = []
 
-    ymaps.ready()
-
     globalThis.setActiveIcon = function setActiveIcon(type, obj) {
         if (type === 'cluster') {
             let foundInCluster = false
@@ -359,7 +357,6 @@ $(document).ready(function () {
                     )
                 }
             })
-            console.log(+get_zone_id)
         }
     }
 
@@ -559,7 +556,7 @@ $(document).ready(function () {
         }
         return false
     }).on('click', '#projects_wnd_showmore', function () {
-        //"показать еще" в окне проектов кластера
+        // "показать еще" в окне проектов кластера
         const me = $(this)
         $.ajax({
             type: 'POST',
@@ -571,7 +568,8 @@ $(document).ready(function () {
             success: function (response) {
                 if (response) response = JSON.parse(response)
                 response = response.data
-                renderedCustomControl.projects = renderedCustomControl.projects.concat(response.projects)//объединяем отрендеренные проекты и те, которые рендерим сейчас
+                // объединяем отрендеренные проекты и те, которые рендерим сейчас
+                renderedCustomControl.projects = renderedCustomControl.projects.concat(response.projects)
                 renderedCustomControl._$content.html(getProjectsString(renderedCustomControl))
                 appLoadScreen.hide()
             }
@@ -625,9 +623,9 @@ $(document).ready(function () {
         }
     }).on('click', '#save_filters_button', function () {//SAVE FILTERS CLICK
         appLoadScreen.loading()
-        const isOpenedFilterRegion = $('#wnd_filter_container').find('#region_filter')//если открыт именно фильтр по регионам
+        /** открыт именно фильтр по регионам */
+        const isOpenedFilterRegion = $('#wnd_filter_container').find('#region_filter')
         setTimeout(() => {
-            // appLoadScreen.loading()
             removeProjectInfoCnt(renderedCustomControl)
             removeActiveIcon()
             resetRecounter()
@@ -686,7 +684,7 @@ $(document).ready(function () {
             map.setCenter([coords[0], coords[1]])
             setMapPoint(ymaps.Placemark, coords, 'islands#blueIcon', 'blue', res.metaData.request)
         }).catch(function (err) {
-            console.log(err)
+            console.warn(err)
         })
     }).on('click', '.close_project_info_cnt', function () {
         removeProjectInfoCnt(renderedCustomControl)
@@ -826,6 +824,717 @@ $(document).ready(function () {
 
     filterLayers.click(function () {
         $(this).toggleClass('active')
+    })
+
+    ymaps.ready(function () {
+        globalThis.industrial_global = Object.fromEntries(Object.entries(industrial_global).filter(([key, zone]) => zone.map_x && zone.map_y))
+        zonesModel = new Zone(industrial_global)
+        globalThis.companyModel = new Company()
+
+        let needOpenProject = false
+
+        let gridSize = 36
+        let base_coords = [59.92, 30.3413]
+        let base_zoom = 7
+
+        if (!get_x && !get_y && companyProdAddresses) {
+            companyProdAddresses.forEach((addr) => {
+                base_coords = [+addr.map_x, +addr.map_y]
+                base_zoom = 7
+            })
+        } else if (get_x && get_y) {
+            if (get_project_id) needOpenProject = true
+            base_coords = [+get_x, +get_y]
+            base_zoom = 11
+        }
+
+        if (isGuest) {
+            base_coords = [59.92, 30.3413]
+            base_zoom = 7
+        }
+
+        if (projects_to_map && projects_to_map.length > 1) {
+            base_coords = [59.92, 60.3413]
+            base_zoom = 7
+        }
+
+        if (!isGuest && app.getUrlParameter('center')) {
+            base_coords = app.getUrlParameter('center').split(',')
+        }
+
+        if (!isGuest && app.getUrlParameter('zoom')) {
+            base_zoom = app.getUrlParameter('zoom')
+        }
+
+        map = new ymaps.Map('map', {
+            center: base_coords,
+            zoom: base_zoom,
+            controls: ['rulerControl']
+        }, {
+            searchControlProvider: 'yandex#search',
+            maxZoom: maxZoom,
+            minZoom: minZoom,
+        })
+
+        balloon = new ymaps.Balloon(map)
+        balloon.options.setParent(map.options)
+
+        currentZoom = base_zoom
+
+        addZoomButtons(map)
+
+        if (typeof gos_global === 'undefined') gos_global = []
+        selected_stage = getFilter_stage[0] ? getFilter_stage.map(t => +t) : stage_global.map(t => +t.id)
+        selected_work_type = getFilter_work_type[0] ? getFilter_work_type.map(t => +t) : work_type_global.map(t => +t.id)
+        selected_laststage = getFilter_laststage[0] ? getFilter_laststage.map(t => +t) : stage_global.map(t => +t.id)
+        selected_sector = getFilter_sector[0] ? getFilter_sector.map(t => +t) : sector_global.map(t => +t.id)
+        selected_region = getFilter_region[0] ? getFilter_region.map(t => +t) : region_global.map(t => +t.id)
+        selected_gos = getFilter_gos[0] ? getFilter_gos.map(t => +t) : gos_global.map(t => +t.id)
+        selected_cost = getFilter_cost[0] || getFilter_cost[0] === 0 ? getFilter_cost.map(t => +t) : cost_global.map(t => +t.id)
+        selected_gos = selected_gos.map(t => +t)
+        selected_country = getFilter_country[0] ? getFilter_country.map(t => +t) : country_global.map(t => +t.code)
+        selected_layers = firstLoadLayers[0] ? firstLoadLayers.map(t => t) : ['projects']
+
+        MyClusterIconContentLayout = ymaps.templateLayoutFactory.createClass(
+            '{% if properties.geoObjects.length > 100 %}'
+            + '<div style="color:FF00FF;font-size:10px;">99+</div>'
+            + '{% else %}'
+            + '<div style="color:FF00FF;font-size:11px;">{{ properties.geoObjects.length }}</div>'
+            + '{% endif %}'
+        )
+        MyClusterIconContentLayoutHover = ymaps.templateLayoutFactory.createClass(
+            '{% if properties.geoObjects.length > 100 %}'
+            + '<div style="color:FF00FF;font-size:14px;">99+</div>'
+            + '{% else %}'
+            + '<div style="color:FF00FF;font-size:15px;">{{ properties.geoObjects.length }}</div>'
+            + '{% endif %}'
+        )
+
+        objectManager = new ymaps.LoadingObjectManager('/ymap/load?bounds=%b', {
+            clusterize: true,
+            hasBalloon: false,
+            gridSize: gridSize,
+            clusterHasBalloon: false,
+            clusterDisableClickZoom: true
+        })
+
+        objectManager.clusters.options.set({
+            clusterIcons: [{
+                href: getIconPath('c', null, 'normal', null, false),
+                size: clusterIconSize,
+                fontSize: clusterFontSize,
+                font: clusterFontSize,
+                offset: clusterIconOffset,
+            }],
+            clusterIconContentLayout: MyClusterIconContentLayout
+        })
+        objectManager.objects.options.set({
+            'iconLayout': 'default#image',
+            'iconImageSize': projectIconSize
+        })
+
+        map.events.add('actionend', function (e) {
+            updateUrl()
+            hideFilters()
+            if (map.regionChanged) return
+            resetRecounter()
+
+            currentZoom = map.getZoom()
+        })
+
+        objectManager.clusters.events.add(['mouseenter', 'mouseleave'], function (e) {
+            var target = e.get('target'),
+                type = e.get('type')
+            if (type == 'mouseenter') {
+                if (e.get('objectId') == clickedObjectId) return
+                let cl = objectManager.clusters.getById(e.get('objectId'))
+
+                if (cl) objectManager.clusters.setClusterOptions(cl.id, {
+                    clusterIcons: [{
+                        href: cl.options.clusterIcons[0].href,
+                        size: clusterIconSizeBig,
+                        offset: clusterIconOffsetBig
+                    }],
+                    clusterIconContentLayout: MyClusterIconContentLayoutHover
+                })
+            } else {
+                if (e.get('objectId') == clickedObjectId) return
+                let cl = objectManager.clusters.getById(e.get('objectId'))
+
+                if (cl) objectManager.clusters.setClusterOptions(cl.id, {
+                    clusterIcons: [{
+                        href: cl.options.clusterIcons[0].href,
+                        size: projectIconSize,
+                        offset: projectIconOffset
+                    }],
+                    clusterIconContentLayout: MyClusterIconContentLayout
+                })
+            }
+        })
+
+        objectManager.objects.events.add(['mouseenter', 'mouseleave'], function (e) {
+            var type = e.get('type')
+
+            if (type == 'mouseenter') {
+                if (e.get('objectId') == clickedObjectId) {
+                    return
+                }
+                objectManager.objects.setObjectOptions(e.get('objectId'), {
+                    iconImageSize: projectIconSizeBig,
+                    iconImageOffset: projectIconOffsetBig
+                })
+            } else {
+                if (e.get('objectId') == clickedObjectId) {
+                    return
+                }
+                objectManager.objects.setObjectOptions(e.get('objectId'), {
+                    iconImageSize: projectIconSize,
+                    iconImageOffset: projectIconOffset
+                })
+            }
+        })
+
+        const allSeen = getUsedProjects().concat(_seenGroupMy)
+
+        objectManager.objects.events.add(['add'], onObjectCollectionAdd)
+        objectManager.clusters.events.add('add', onAddCluster)
+
+        const myBorders = ymaps.borders.load('RU', { lang: 'ru', quality: 2 })
+
+        if (isGuest) {
+            if (app.cookieCoords) {
+                if (app.cookieCoords !== 'undefined') {
+                    detectGuestRegion(app.getCookie('region'))
+                }
+            } else {
+                $.get('https://api.sypexgeo.net/4Rc1A/json/', function () { }, 'json')
+                    .done(function (resp) {
+                        if (typeof resp.city !== 'undefined') {
+                            app.setCookie('base_coords1', [resp.city.lat, resp.city.lon])
+                            app.cookieCoords = [resp.city.lat, resp.city.lon]
+                            app.setCookie('country', resp.country.iso)
+                            app.cookieCountry = resp.country.iso
+                            app.setCookie('region', resp.region.name_ru)
+                            detectGuestRegion(resp.region.name_ru, resp.city.lat, resp.city.lon)
+                        } else {
+                            app.setCookie('base_coords1', 'undefined')
+                        }
+                    })
+                    .fail(function () {
+                        app.setCookie('base_coords1', 'undefined')
+                    })
+            }
+        } else {
+            getFilters(true)
+            applyFilter()
+            changeLayers()
+            loadCompanies()
+        }
+
+        map.geoObjects.add(objectManager)
+
+        map.events.add('click', hideFilters)
+        objectManager.clusters.events.add('click', onClusterClick)
+        objectManager.objects.events.add(['click'], onObjectClick)
+
+        projects_global = []
+
+        $.ajax({
+            url: '/ymap/load?callback=?',
+            type: "GET",
+            dataType: "jsonp",
+            jsonpCallback: "getTotalFetures",
+            success: function (data) { getTotalFetures(data) }
+        })
+
+        getCompanyData = function getCompanyData(ids) {
+            appLoadScreen.loading()
+            $.ajax({
+                type: 'POST',
+                url: app.en_prefix + '/ajax/ymaps/get-companies-data',
+                data: { ids },
+                success: function (response) {
+                    if (response) response = JSON.parse(response).data
+                    renderProjectsData(response, 0, [], 'company')
+                    appLoadScreen.hide()
+                },
+                error: function () { appLoadScreen.hide() }
+            })
+        }
+
+        getProjectsData = function getProjectsData(ids, callback = null) {
+            appLoadScreen.loading()
+            $.ajax({
+                type: 'POST',
+                url: app.en_prefix + '/ajax/ymaps/get-projects-data',
+                data: { ids },
+                success: function (response) {
+                    if (response) response = JSON.parse(response).data
+                    renderProjectsData(response.projects, response.projects_quantity, response.projects_all_ids)
+                    appLoadScreen.hide()
+                    if (callback) callback()
+                },
+                error: function () { appLoadScreen.hide() }
+            })
+        }
+
+        /** контрол инфы о проекте, который поялвяется по клику */
+        let CustomControlClass = function (options) {
+            CustomControlClass.superclass.constructor.call(this, options)
+            this._$content = null
+        }
+
+        ymaps.util.augment(CustomControlClass, ymaps.collection.Item, {
+            onRemoveFromMap: function (oldMap) {
+                if (this._$content) {
+                    this._$content.remove()
+                    this._mapEventGroup.removeAll()
+                }
+                CustomControlClass.superclass.onRemoveFromMap.call(this, oldMap)
+            },
+            onAddToMap: function (map) {
+                CustomControlClass.superclass.onAddToMap.call(this, map)
+                this.getParent().getChildElement(this).then(this._onGetChildElement, this)
+            },
+            _onGetChildElement: function (parentDomContainer) {
+                this._$content = $('<div id="map__project_info_cnt" style="overflow-y: scroll;  " class="map__project_info_cnt"></div>').appendTo(parentDomContainer)
+                this._mapEventGroup = this.getMap().events.group()
+                this._createRequest()
+            },
+            _createRequest: function () {
+                const content = getProjectsString(renderedCustomControl)
+
+                if (!content) {
+                    removeProjectInfoCnt(renderedCustomControl)
+                    return false
+                }
+                this._$content.html(content)
+
+                if (this._$content.height() > 600) {
+                    this._$content.css('overflow-y', 'scroll')
+                }
+
+                if ($('#map__project_info_cnt').length) {
+                    $('.autoSelectedRegion').addClass('autoSelectedRegion--projectResponsive')
+                } else {
+                    $('.autoSelectedRegion').removeClass('autoSelectedRegion--projectResponsive')
+                }
+            }
+        })
+
+        addWHToTheMap(companyProdAddresses, ymaps.Placemark)
+
+        if (needOpenProject || get_project_id) {
+            // тыкнули проект с карточки проекта, нужно его открыть
+            const callbackOpenProject = () => {
+                if (!setActiveIcon('cluster')) {
+                    setActiveIcon('project')
+                }
+            }
+            getProjectsData([get_project_id], callbackOpenProject)
+            // СДЕЛАТЬ ПРОЕКТ АКТИВНЫМ ПРИ ПЕРЕХОДЕ С КАРТОЧКИ
+            setTimeout(function () {
+                if (!setActiveIcon('cluster')) {
+                    setActiveIcon('project')
+                }
+            }, 2800)
+        }
+
+        let industrialsOnMap = new ymaps.GeoObjectCollection()
+        let key
+        let myGeoObjects = []
+
+        for (key in industrial_global) {
+            let entry = industrial_global[key]
+        }
+
+        if (typeof isAdminOrEditor != 'undefined' && isAdminOrEditor) {
+            window.active_polygon = false
+            let editingZones = false
+            let colorPolygon = $('.color_polygon')
+            let fillopacityPolygon = $('.fillopacity_polygon')
+            let industrialNameSelect = $('#industrial_name')
+            let button = new ymaps.control.Button({
+                data: { content: 'Редактировать зоны' },
+                options: {
+                    maxWidth: 350,
+                    position: { bottom: 100, right: 10 }
+                }
+            })
+            let buttonRemover = new ymaps.control.Button({
+                data: { content: 'Создать ластик' },
+                options: {
+                    maxWidth: 350,
+                    position: { bottom: 100, right: 170 }
+                }
+            })
+
+            map.controls.add(button)
+            map.controls.add(buttonRemover)
+
+            let zoneFilterBtn = $('.left-filter-item[data-filter="zones"]')
+                .closest('.filter_data')
+                .find('.filter-trigger')
+            zoneFilterBtn.click(function () { zonesModel.update(setLVRV) })
+
+            colorPolygon.colorpicker()
+
+            let selectorIndustrials = industrialNameSelect.selectize({
+                closeAfterSelect: true
+            })
+
+            if (typeof selectorIndustrials[0] != 'undefined') {
+                selectorIndustrials = selectorIndustrials[0].selectize
+            }
+
+            colorPolygon.on('colorpickerChange', function (event) {
+                if (window.active_polygon) {
+                    window.active_polygon.options.set("fillColor", event.color.toString())
+                    window.active_polygon.options.set("strokeColor", event.color.toString())
+                }
+            })
+
+            fillopacityPolygon.blur(function () {
+                if (window.active_polygon) {
+                    window.active_polygon.options.set("fillOpacity", $(this).val())
+                }
+            })
+
+            $('#addPolygon').click(function () {
+                let color_polygon = $('#formpolygon .color_polygon').val()
+                let fillopacity_polygon = $('#formpolygon .fillopacity_polygon').val()
+                let industrial_name = $('#industrial_name option:selected').text()
+                let industrial_id = $('#industrial_name option:selected').val()
+
+                let polygon = new ymaps.Polygon([[]], {
+                    hintContent: industrial_name,
+                    balloonContent: industrial_name
+                }, {
+                    fillColor: color_polygon,
+                    strokeColor: color_polygon,
+                    fillOpacity: fillopacity_polygon,
+                    strokeOpacity: 0.6,
+                    strokeWidth: 3
+                })
+
+                polygon.properties.set("myID", industrial_id)
+                map.geoObjects.add(polygon)
+                selectorIndustrials.removeOption(industrial_id)
+                window.active_polygon = polygon
+                industrialsOnMap.add(polygon)
+                polygon.editor.startDrawing()
+                editPolygon(polygon, true)
+            })
+
+            $('#removePolygon').click(function () {
+                $.ajax({
+                    type: 'POST',
+                    url: '/ajax/industrials/save-coords',
+                    data: {
+                        industrialId: window.active_polygon.properties.get("myID"),
+                        coordinates: 'null'
+                    },
+                    success: function (response) {
+                        industrialsOnMap.remove(window.active_polygon)
+                        map.geoObjects.remove(window.active_polygon)
+                        $('#formpolygonedit').addClass('d-none')
+                        window.active_polygon = false
+                    }
+                })
+            })
+
+            button.events.add('click', function (e) {
+                $('#formpolygon').toggleClass('d-none')
+
+                if (!$('#formpolygonedit').hasClass('d-none')) {
+                    $('#formpolygonedit').addClass('d-none')
+                }
+                window.active_polygon = false
+
+                if (!button.isSelected()) {
+                    map.geoObjects.removeAll()
+                    map.geoObjects.add(industrialsOnMap)
+                } else {
+                    map.geoObjects.removeAll()
+                    map.geoObjects.add(objectManager)
+                }
+            })
+
+            let circle = null
+
+            buttonRemover.events.add('click', function (e) {
+                if (buttonRemover.isSelected() && circle) {
+                    map.geoObjects.remove(circle)
+                    circle = null
+                    return
+                } else if (buttonRemover.isSelected()) {
+                    circle = null
+                    return
+                }
+
+                if (!window.active_polygon || !button.isSelected()) {
+                    circle = null
+                    return
+                }
+
+                circle = new ymaps.Circle([[]], null, {
+                    draggable: true,
+                    fillColor: '#ff0000',
+                    strokeColor: '#ff0000',
+                    strokeOpacity: 0.9,
+                    strokeWidth: 3
+                })
+
+                map.geoObjects.add(circle)
+                circle.editor.startDrawing()
+
+                let obj = window.active_polygon
+                let result = obj.geometry.getCoordinates()
+                let stateMonitor = new ymaps.Monitor(circle.editor.state)
+
+                stateMonitor.add("drawing", function (newValue) {
+                    circle.editor.stopEditing()
+                })
+
+                circle.events.add('drag', function (e) {
+                    if (!obj.geometry.getLength()) return
+                    let closest = obj.geometry.getClosest(circle.geometry.getCoordinates())
+
+                    if (!closest) return
+
+                    if (closest.distance <= circle.geometry.getRadius()) {
+                        result[closest.pathIndex].splice(closest.closestPointIndex, 1)
+                        obj.geometry.setCoordinates(result)
+                    }
+                })
+            })
+        }
+
+        setTimeout(() => { appLoadScreen.hide() }, 3000)
+
+        $('body').on('click', '[name="layerShow[]"]', () => { changeLayers() })
+
+        function onObjectCollectionAdd(e) {
+            let object = e.get('child')
+            projects_all.features.push(object)
+            objectManager.objects.setObjectOptions(object.id, {
+                iconImageOffset: projectIconOffset,
+                iconImageHref: getIconPath('p', object.t, (allSeen.includes(object.id) ? 'visited' : 'normal'), object, isProjectInAnyFolder(object.id))
+            })
+
+            if (get_project_id && +get_project_id == +object.id && !setActiveIcon('cluster')) {
+                setActiveIcon('project')
+            }
+        }
+
+        function onAddCluster(e) {
+            let cluster = objectManager.clusters.getById(e.get('objectId'))
+            let isFolder = true
+            const clusterIds = cluster.features.map(feature => {
+                if (isFolder) isFolder = isProjectInAnyFolder(feature.id)
+                return feature.id
+            })
+            let counter = 0
+            clusterIds.forEach(id => {
+                if (allSeen.includes(id)) counter++
+            })
+            let type = 'normal'
+
+            if (counter == clusterIds.length) type = 'visited'
+
+            objectManager.clusters.setClusterOptions(cluster.id, {
+                clusterIcons: [{
+                    href: getIconPath('c', null, type, cluster, isFolder),
+                    size: clusterIconSize,
+                    offset: clusterIconOffset
+                }]
+            })
+        }
+
+        function detectGuestRegion(provinceNameRu, lat = -1, lon = -1) {
+            appLoadScreen.loading()
+
+            if (provinceNameRu != '' && app.cookieCountry == 'RU') {
+                const provinceInput = $('.custom-control-description:contains(' + provinceNameRu + ')')
+                    .closest('label')
+                    .find('input')
+
+                if (provinceNameRu && provinceInput) {
+                    $('.autoSelectedRegion > span')
+                        .text(provinceNameRu)
+                    $('.autoSelectedRegion')
+                        .show()
+                    $('[data-type="' + provinceInput.data('type') + '"]')
+                        .prop('checked', false)
+                    provinceInput.prop('checked', true)
+
+                    if (provinceNameRu == 'Ленинградская область') {
+                        $('[name="filter[regions][59]"]').prop('checked', true)
+                    }
+
+                    if (provinceNameRu == 'Санкт-Петербург') {
+                        $('[name="filter[regions][37]"]').prop('checked', true)
+                    }
+
+                    if (provinceNameRu == 'Московская область') {
+                        $('[name="filter[regions][42]"]').prop('checked', true)
+                    }
+
+                    if (provinceNameRu == 'Москва') {
+                        $('[name="filter[regions][43]"]').prop('checked', true)
+                    }
+
+                    let checked = []
+
+                    $('input[data-type="regions"]:checked').each(function () {
+                        checked.push($(this).data('item_id'))
+                    })
+
+                    objectManager.setFilter(function (elem) {
+                        return checked.indexOf(+elem.o) != -1 ? true : false
+                    })
+
+                    $('[data-type="' + provinceInput.data('type') + '"]').trigger('change')
+
+                    myBorders.then(function (result) {
+                        borders_onMap = ymaps.geoQuery(result)
+
+                        let region = borders_onMap
+                            .search('properties.name = "' + provinceNameRu + '"')
+
+                        region.addToMap(map)
+
+                        if (lat > 0 && lon > 0) moveMapToRegion(lat, lon)
+                        else moveMapToRegion(...app.cookieCoords.split(','))
+
+                        if (provinceNameRu == 'Ленинградская область') {
+                            borders_onMap.search('properties.name = "Санкт-Петербург"').addToMap(map)
+                        }
+
+                        if (provinceNameRu == 'Санкт-Петербург') {
+                            borders_onMap.search('properties.name = "Ленинградская область"').addToMap(map)
+                        }
+
+                        if (provinceNameRu == 'Московская область') {
+                            borders_onMap.search('properties.name = "Москва"').addToMap(map)
+                        }
+
+                        if (provinceNameRu == 'Москва') {
+                            borders_onMap.search('properties.name = "Московская область"').addToMap(map)
+                        }
+                    })
+                }
+            }
+
+        }
+
+        function getTotalFetures(json) {
+            if (json.Error) {
+                console.warn(json)
+            } else {
+                projects_global = json
+                totalSummRecount()
+            }
+        }
+
+        /** КЛИК НА ПРОЕКТЕ */
+        function onObjectClick(e) {
+            if ((isGuest || isRegistrant) && !isFpOK) {
+                $('#no-access').modal('show')
+                return
+            }
+            hideFilters()
+            removeActiveIcon()
+
+            let objectId = e.get('objectId')
+
+            /** объект со свойствами, которые генерятся в пхп */
+            let object = objectManager.objects.getById(objectId)
+
+            // запишем ид для аналитики
+            if (ymaps.cp_instance) ymaps.cp_instance.addIdsToClicked([object.id])
+
+            addUsedProjects([object.id])
+            clicked_balloon = object
+            // смена иконки при клике на ОБЪЕКТ
+            clickedObjectId = e.get('objectId')
+            clickedObjectType = 'project'
+            clickedObjectStage = object.t
+            objectManager.objects.setObjectOptions(e.get('objectId'), {
+                iconImageSize: projectIconSizeBig,
+                iconImageOffset: projectIconOffsetBig,
+                iconImageHref: getIconPath('p', object.t, 'active', object, isProjectInAnyFolder(object.id))
+            })
+
+            if (renderedCustomControl) removeProjectInfoCnt(renderedCustomControl)
+
+            getProjectsData([clicked_balloon.id])
+        }
+
+        /** КЛИК НА КЛАСТЕРЕ */
+        function onClusterClick(e) {
+            if ((isGuest || isRegistrant) && !isFpOK) {
+                $('#no-access').modal('show')
+                return
+            }
+            hideFilters()
+            removeActiveIcon()
+
+            isFolder = false
+            objectManager.clusters.getById(e.get('objectId')).features.forEach(feature => {
+                isFolder = isProjectInAnyFolder(feature.id)
+                if (!isFolder) return
+            })
+
+            clickedObjectId = e.get('objectId')
+            clickedObjectType = 'cluster'
+
+            const cl = objectManager.clusters.getById(e.get('objectId'))
+
+            objectManager.clusters.setClusterOptions(cl.id, {
+                clusterIcons: [{
+                    href: getIconPath('c', null, 'active', cl, isFolder),
+                    size: clusterIconSizeBig,
+                    offset: clusterIconOffsetBig
+                }],
+                clusterIconContentLayout: MyClusterIconContentLayout
+            })
+
+            const objectId = e.get('objectId')
+            const cluster = objectManager.clusters.getById(objectId)
+            const featuresIds = cluster.features.map((feature) => {
+                return feature.id
+            })
+
+            get_project_id = featuresIds[0]
+
+            getProjectsData(featuresIds)
+            addUsedProjects(featuresIds)
+
+            // запишем ид для аналитики
+            if (ymaps.cp_instance) ymaps.cp_instance.addIdsToClicked(featuresIds)
+        }
+
+        /** показываем новое окно с проектами. Добавление проектов в окно происходит уже непосредственно в конструкторе CustomControlClass */
+        function renderProjectsData(projects, projects_quantity = 0, projects_all_ids = [], type = 'projects') {
+            if (renderedCustomControl) removeProjectInfoCnt(renderedCustomControl)
+
+            let customControl = new CustomControlClass()
+
+            map.controls.add(customControl, {
+                float: 'none',
+                /** абсолютное позиционирование карточки проекта */
+                position: {
+                    top: window.innerWidth > 600 ? 0 : 30,
+                    left: window.innerWidth > 600 ? 200 : 30
+                }
+            })
+            renderedCustomControl = customControl
+            renderedCustomControl[type] = projects
+            renderedCustomControl[type + '_quantity'] = projects_quantity
+            renderedCustomControl[type + '_all_ids'] = projects_all_ids
+            renderedCustomControl.type = type
+        }
     })
 
     function loadCompanies() {
@@ -1004,8 +1713,7 @@ $(document).ready(function () {
         /** клик на иконке склада */
         const clicked_wh = e.get('target')
 
-        // показываем круг с заданным радиусом
-        // уберем радиус, если он уже раньше был установлен
+        // показываем круг с заданным радиусом и уберем радиус, если он уже раньше был установлен
         g_warehouses_circles.forEach((this_radius, index) => {
             if (this_radius.wh_id === clicked_wh.wh_id) {
                 g_warehouses_circles = g_warehouses_circles.filter((rad) => {
@@ -1027,7 +1735,8 @@ $(document).ready(function () {
                 }
             })
             warehouseRadius.wh_id = clicked_wh.wh_id
-            g_warehouses_circles.push(warehouseRadius)//глобальный массив кликнутых кругов-радиусов
+            /** глобальный массив кликнутых кругов-радиусов */
+            g_warehouses_circles.push(warehouseRadius)
             map.geoObjects.add(warehouseRadius)
         }
     }
@@ -1049,12 +1758,16 @@ $(document).ready(function () {
                     preset: 'islands#blueDotIcon',
                     iconCaptionMaxWidth: '250',
                     iconColor: '#29659f',
-                })
-            this_wh_pm.wh_id = addr.id //запишем ид склада прямо в плэйсмарк
+                }
+            )
+
+            // запишем ид склада прямо в плэйсмарк
+            this_wh_pm.wh_id = addr.id
 
             this_wh_pm.events.add(['click'], whPlacemarkClick)
             map.geoObjects.add(this_wh_pm)
-            g_warehouses_pm.push(this_wh_pm)// глобальный массив плэйсмарков складов
+            /** глобальный массив плэйсмарков складов */
+            g_warehouses_pm.push(this_wh_pm)
         })
 
         setTimeout(() => {
@@ -1556,7 +2269,7 @@ function showGuestWnd() {
                 fpOurId = res.userFpId
                 isFpOK = res.isMapLimited
             })
-            .fail(function () { console.log('fail ajax fp') })
+            .fail(function () { console.warn('fail ajax fp') })
     }
 }
 
@@ -1584,7 +2297,7 @@ function registerMapFingerPrint() {
                         localStorage.setItem('gsp', 0)
                     }
                 })
-                .fail(function () { console.log('fail ajax fp') })
+                .fail(function () { console.warn('fail ajax fp') })
         })
 }
 
@@ -1682,7 +2395,7 @@ function findProductsQuery() {
 
                 projectsProductSearch = projSearch
 
-                //расставим ВЭ проекты (они уже отобраны по текущей продукции)
+                // расставим ВЭ проекты (они уже отобраны по текущей продукции)
                 inService.forEach(project => {
                     inServicePlacemarks.push(addPlacemark({
                         map_x: project.map_x,
@@ -1708,7 +2421,6 @@ function findProductsQuery() {
         .fail(function () {
             appLoadScreen.hide()
         })
-
 }
 
 function toggleFullScreen() {
