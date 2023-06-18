@@ -1,12 +1,12 @@
 'use strict'
 
-var textFile: any = null
+var textFile = null
 
 var balloon = null
 var needOpenBaloon = true
 let projects_global = null
-let get_project_id = null
-let get_zone_id = null
+let get_project_id: number | null = null
+let get_zone_id: number | null = null
 let zonesModel = null
 let projects_all = { 'features': [] }
 let industrials_active = []
@@ -257,7 +257,7 @@ $('#prod_addr_container .close')
 $('#prod_addr_container .form-control')
     .addClass('form-control-sm')
 
-document.activeElement.blur()
+if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
 
 $(document).ready(function () {
     $('.map-controls__full-screen--turn-on').click(function () {
@@ -286,7 +286,7 @@ $(document).ready(function () {
         $('header').css('z-index', '1060')
         registerMapFingerPrint()
             .then(() => {
-                if (!isFpOK || localStorage.getItem('gsp') >= guestProjectsAvailable)
+                if (!isFpOK || +(localStorage.getItem('gsp') ?? 0) >= guestProjectsAvailable)
                     showGuestWnd()
             })
     }
@@ -311,6 +311,7 @@ $(document).ready(function () {
     globalThis.setActiveIcon = function setActiveIcon(type, obj) {
         if (type === 'cluster') {
             let foundInCluster = false
+            if (!objectManager) return false
             objectManager.clusters.each((obj) => {
                 obj.features.forEach((feature) => {
                     if (+feature.id === +get_project_id || clickedObjectId == +obj.id) {
