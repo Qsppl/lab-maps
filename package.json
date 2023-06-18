@@ -1,0 +1,16 @@
+{
+  "name": "lab-maps",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/jquery": "^3.5.16",
+    "@types/yandex-maps": "^2.1.29",
+    "jquery": "^3.6.4"
+  }
+}
