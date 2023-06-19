@@ -2,12 +2,12 @@
 
 var textFile = null
 
-var balloon = null
+var balloon: null | ymaps.Balloon = null
 var needOpenBaloon = true
 let projects_global = null
 let get_project_id: number | null = null
 let get_zone_id: number | null = null
-let zonesModel = null
+let zonesModel: null | Zone = null
 let projects_all = { 'features': [] }
 let industrials_active = []
 let projectsInActiveIndustrialsOnly = false
@@ -16,16 +16,16 @@ let borders_onMap = null
 let quantityTotal = 1
 let getProjectsData = null
 let getCompanyData = null
-let selectedFoldersProjects = []
+let selectedFoldersProjects: JQuery<HTMLElement>[] = []
 let onlyFolders = true
 let excludeFolders = false
 let seenVisible = false
 
-var MyClusterIconContentLayout = null
-var MyClusterIconContentLayoutHover = null
+var MyClusterIconContentLayout: null | ymaps.IClassConstructor<ymaps.layout.templateBased.Base> = null
+var MyClusterIconContentLayoutHover: null | ymaps.IClassConstructor<ymaps.layout.templateBased.Base> = null
 
-var map = null
-var objectManager = null
+var map: null | ymaps.Map = null
+var objectManager: null | YmapsExtendedNS.LoadingObjectManager<ymaps.IGeometry> = null
 var objectManagerZones = null
 const companiesPlacemarks = []
 const inServicePlacemarks = []
@@ -119,7 +119,7 @@ let totalFilteredProjects = 0
 let screenFilteredProjects = 0
 let renderedCustomControl = null
 let filtersTopY = 10
-let currentZoom = null
+let currentZoom: null | number = null
 let searchMarks = []
 
 let selectizeParams = {
@@ -175,56 +175,42 @@ const isRegistrant = $('#registrant').val() == 'registrant'
 
 // START EXECUTION CODE
 
+/** Url deserialized param 'link_from' */
 var link_from = app.getUrlParameter('link_from') || false
 
-if (app.getUrlParameter('project_id')) get_project_id = +app.getUrlParameter('project_id')
-if (app.getUrlParameter('zone_id')) get_zone_id = +app.getUrlParameter('zone_id')
+if (app.getUrlParameter('project_id')) get_project_id = +(app.getUrlParameter('project_id') || '')
+if (app.getUrlParameter('zone_id')) get_zone_id = +(app.getUrlParameter('zone_id') || '')
 
-let getFilter_stage = app.getUrlParameter('stages')
-    ? app.getUrlParameter('stages').split(',').map(t => +t)
-    : []
-let getFilter_work_type = app.getUrlParameter('work_type')
-    ? app.getUrlParameter('work_type').split(',').map(t => +t)
-    : []
-let getFilter_laststage = app.getUrlParameter('laststages')
-    ? app.getUrlParameter('laststages').split(',').map(t => +t)
-    : []
-let getFilter_sector = app.getUrlParameter('sectors')
-    ? app.getUrlParameter('sectors').split(',').map(t => +t)
-    : []
-let getFilter_fo = app.getUrlParameter('fos')
-    ? app.getUrlParameter('fos').split(',').map(t => +t)
-    : []
-let getFilter_region = app.getUrlParameter('regions')
-    ? app.getUrlParameter('regions').split(',').map(t => +t)
-    : []
-let getFilter_gos = app.getUrlParameter('gos')
-    ? app.getUrlParameter('gos').split(',').map(t => +t)
-    : []
-let getFilter_cost = app.getUrlParameter('cost')
-    ? app.getUrlParameter('cost').split(',').map(t => +t)
-    : []
-let getFilter_country = app.getUrlParameter('countries')
-    ? app.getUrlParameter('countries').split(',').map(t => +t)
-    : []
-let getFilter_inv = app.getUrlParameter('cost')
-    ? app.getUrlParameter('cost').split(',').map(t => +t)
-    : []
-let get_x = app.getUrlParameter('x')
-    ? app.getUrlParameter('x')
-    : null
-let get_y = app.getUrlParameter('y')
-    ? app.getUrlParameter('y')
-    : null
-let reloadStorage = app.getUrlParameter('clean_storage')
-    ? app.getUrlParameter('clean_storage')
-    : null
-let firstLoadFolders = app.getUrlParameter('folders')
-    ? app.getUrlParameter('folders').split(',').map(t => +t)
-    : []
-let firstLoadLayers = app.getUrlParameter('layers')
-    ? app.getUrlParameter('layers').split(',').map(t => t)
-    : []
+/** Url deserialized param 'stages' */
+let getFilter_stage: number[] = (app.getUrlParameter('stages') || '').split(',').map(t => +t)
+/** Url deserialized param 'work_type' */
+let getFilter_work_type: number[] = (app.getUrlParameter('work_type') || '').split(',').map(t => +t)
+/** Url deserialized param 'laststages' */
+let getFilter_laststage: number[] = (app.getUrlParameter('laststages') || '').split(',').map(t => +t)
+/** Url deserialized param 'sectors' */
+let getFilter_sector: number[] = (app.getUrlParameter('sectors') || '').split(',').map(t => +t)
+/** Url deserialized param 'fos' */
+let getFilter_fo: number[] = (app.getUrlParameter('fos') || '').split(',').map(t => +t)
+/** Url deserialized param 'regions' */
+let getFilter_region: number[] = (app.getUrlParameter('regions') || '').split(',').map(t => +t)
+/** Url deserialized param 'gos' */
+let getFilter_gos: number[] = (app.getUrlParameter('gos') || '').split(',').map(t => +t)
+/** Url deserialized param 'cost' */
+let getFilter_cost: number[] = (app.getUrlParameter('cost') || '').split(',').map(t => +t)
+/** Url deserialized param 'countries' */
+let getFilter_country: number[] = (app.getUrlParameter('countries') || '').split(',').map(t => +t)
+/** Url deserialized param 'cost' */
+let getFilter_inv: number[] = (app.getUrlParameter('cost') || '').split(',').map(t => +t)
+/** Url deserialized param 'x' */
+let get_x: string | null = app.getUrlParameter('x') || null
+/** Url deserialized param 'y' */
+let get_y: string | null = app.getUrlParameter('y') || null
+/** Url deserialized param 'clean_storage' */
+let reloadStorage: string | null = app.getUrlParameter('clean_storage') || null
+/** Url deserialized param 'folders' */
+let firstLoadFolders: number[] = (app.getUrlParameter('folders') || '').split(',').map(t => +t)
+/** Url deserialized param 'layers' */
+let firstLoadLayers: string[] = (app.getUrlParameter('layers') || '').split(',').map(t => t)
 
 const filterTypes = ['stage', 'work_type', 'laststage', 'sector', 'gos', 'region', 'country', 'cost']
 const filterTypesIndex = ['stages', 'work_type', 'laststages', 'sectors', 'gos', 'regions', 'countries', 'investments_filter']
@@ -346,15 +332,16 @@ $(document).ready(function () {
                 }
             })
         } else if (type === 'zone') {
-            zonesModel.objectManager.objects.each((obj) => {
-                if ((obj.id == +get_zone_id) && !balloon.isOpen() && needOpenBaloon) {
+            zonesModel?.objectManager?.objects.each((corruptedObject: any) => {
+                const object: Feature = corruptedObject
+                if ((object.id == +(get_zone_id || '')) && balloon && !balloon.isOpen() && needOpenBaloon) {
                     needOpenBaloon = false
                     balloon.open(
-                        obj.geometry.coordinates,
+                        object.geometry.coordinates,
                         '<div style="margin: 0 0 5px;font-size: 120%;font-weight: 700;">'
-                        + obj.properties.balloonContentHeader
+                        + object.properties.balloonContentHeader
                         + '</div>'
-                        + obj.properties.balloonContent
+                        + object.properties.balloonContent
                     )
                 }
             })
@@ -363,14 +350,19 @@ $(document).ready(function () {
 
     let filter_resetting = false
 
+    // Если в URL были переданы открытые папки - открываем их
     if (firstLoadFolders.length) {
+        // Блочим экран
         appLoadScreen.loading()
         setTimeout(() => {
-            for (let f of firstLoadFolders) {
-                $('.folders_item[data-id="' + f + '"]').find('input').prop('checked', true)
-                selectedFoldersProjects = selectedFoldersProjects.concat($('.folders_item[data-id="' + f + '"]').data('projects_ids'))
+            for (let folder of firstLoadFolders) {
+                // Открываем 
+                $('.folders_item[data-id="' + folder + '"]').find('input').prop('checked', true)
+                // Добавляем выбранные папки в общую коллекцию
+                selectedFoldersProjects = selectedFoldersProjects.concat($('.folders_item[data-id="' + folder + '"]').data('projects_ids'))
             }
             $('#slideFoldersCnt').trigger('click')
+            // Разблокируем экран
             applyFilter([appLoadScreen.hide])
         }, 0)
     }
@@ -392,15 +384,18 @@ $(document).ready(function () {
 
     if (isGuest) guestWarningBlock.appendTo(map_div)
 
-    let hideSearch = 'd-none'
+    // Генерируем UI - Выпадающее поле "Поиск проектов"
 
-    if (get_searchword && get_searchword.length > 1) hideSearch = ''
+    /** Если есть стартовый поисковый запрос не определен, определяем его как пустую строку*/
+    get_searchword = get_searchword ?? ''
 
-    const searchCnt = $('<div>', { id: 'filter_projects_pack_cnt', class: hideSearch })
+    /** UI - Выпадающее поле "Поиск проектов" для поиска проектов по Id */
+    const searchCnt = $('<div>', { id: 'filter_projects_pack_cnt', class: get_searchword.length > 1 ? '' : 'd-none' })
         .appendTo($('#map'))
         .show()
 
-    $('<input>', { type: 'text', id: 'filter_projects_pack_input', class: 'form-control', placeholder: ' Введите ID проекта' }).val(get_searchword || '')
+    $('<input>', { type: 'text', id: 'filter_projects_pack_input', class: 'form-control', placeholder: ' Введите ID проекта' })
+        .val(get_searchword)
         .appendTo(searchCnt)
 
     const cross = '<button type="button" class="close clear_search_field"><span aria-hidden="true">×</span></button>'
@@ -410,6 +405,8 @@ $(document).ready(function () {
     $('<button>', { class: 'btn btn-sm btn-default', id: 'filter_projects_pack_btn' })
         .text((app.languageLocale === 'en' ? 'Search' : 'Найти проекты'))
         .appendTo(searchCnt)
+
+    // Готово
 
     loadProdAddressPanel(companyProdAddresses)
 
@@ -860,11 +857,13 @@ $(document).ready(function () {
         }
 
         if (!isGuest && app.getUrlParameter('center')) {
-            base_coords = app.getUrlParameter('center').split(',')
+            /** Url deserialized param 'center' */
+            base_coords = app.getUrlParameter('center').split(',').map((value) => +value)
         }
 
         if (!isGuest && app.getUrlParameter('zoom')) {
-            base_zoom = app.getUrlParameter('zoom')
+            /** Url deserialized param 'zoom' */
+            base_zoom = +(app.getUrlParameter('zoom'))
         }
 
         map = new ymaps.Map('map', {
@@ -884,13 +883,13 @@ $(document).ready(function () {
 
         addZoomButtons(map)
 
-        if (typeof gos_global === 'undefined') gos_global = []
+        globalThis.gos_global = globalThis.gos_global ?? []
         selected_stage = getFilter_stage[0] ? getFilter_stage.map(t => +t) : stage_global.map(t => +t.id)
         selected_work_type = getFilter_work_type[0] ? getFilter_work_type.map(t => +t) : work_type_global.map(t => +t.id)
         selected_laststage = getFilter_laststage[0] ? getFilter_laststage.map(t => +t) : stage_global.map(t => +t.id)
         selected_sector = getFilter_sector[0] ? getFilter_sector.map(t => +t) : sector_global.map(t => +t.id)
         selected_region = getFilter_region[0] ? getFilter_region.map(t => +t) : region_global.map(t => +t.id)
-        selected_gos = getFilter_gos[0] ? getFilter_gos.map(t => +t) : gos_global.map(t => +t.id)
+        selected_gos = getFilter_gos.length ? getFilter_gos.map(t => +t) : gos_global.map(t => +t.id)
         selected_cost = getFilter_cost[0] || getFilter_cost[0] === 0 ? getFilter_cost.map(t => +t) : cost_global.map(t => +t.id)
         selected_gos = selected_gos.map(t => +t)
         selected_country = getFilter_country[0] ? getFilter_country.map(t => +t) : country_global.map(t => +t.code)
@@ -903,6 +902,7 @@ $(document).ready(function () {
             + '<div style="color:FF00FF;font-size:11px;">{{ properties.geoObjects.length }}</div>'
             + '{% endif %}'
         )
+
         MyClusterIconContentLayoutHover = ymaps.templateLayoutFactory.createClass(
             '{% if properties.geoObjects.length > 100 %}'
             + '<div style="color:FF00FF;font-size:14px;">99+</div>'
@@ -911,7 +911,7 @@ $(document).ready(function () {
             + '{% endif %}'
         )
 
-        objectManager = new ymaps.LoadingObjectManager('/ymap/load?bounds=%b', {
+        objectManager = new ymapsExtended.LoadingObjectManager('/ymap/load?bounds=%b', {
             clusterize: true,
             hasBalloon: false,
             gridSize: gridSize,
@@ -929,76 +929,13 @@ $(document).ready(function () {
             }],
             clusterIconContentLayout: MyClusterIconContentLayout
         })
+
         objectManager.objects.options.set({
             'iconLayout': 'default#image',
             'iconImageSize': projectIconSize
         })
 
-        map.events.add('actionend', function (e) {
-            updateUrl()
-            hideFilters()
-            if (map.regionChanged) return
-            resetRecounter()
-
-            currentZoom = map.getZoom()
-        })
-
-        objectManager.clusters.events.add(['mouseenter', 'mouseleave'], function (e) {
-            var target = e.get('target'),
-                type = e.get('type')
-            if (type == 'mouseenter') {
-                if (e.get('objectId') == clickedObjectId) return
-                let cl = objectManager.clusters.getById(e.get('objectId'))
-
-                if (cl) objectManager.clusters.setClusterOptions(cl.id, {
-                    clusterIcons: [{
-                        href: cl.options.clusterIcons[0].href,
-                        size: clusterIconSizeBig,
-                        offset: clusterIconOffsetBig
-                    }],
-                    clusterIconContentLayout: MyClusterIconContentLayoutHover
-                })
-            } else {
-                if (e.get('objectId') == clickedObjectId) return
-                let cl = objectManager.clusters.getById(e.get('objectId'))
-
-                if (cl) objectManager.clusters.setClusterOptions(cl.id, {
-                    clusterIcons: [{
-                        href: cl.options.clusterIcons[0].href,
-                        size: projectIconSize,
-                        offset: projectIconOffset
-                    }],
-                    clusterIconContentLayout: MyClusterIconContentLayout
-                })
-            }
-        })
-
-        objectManager.objects.events.add(['mouseenter', 'mouseleave'], function (e) {
-            var type = e.get('type')
-
-            if (type == 'mouseenter') {
-                if (e.get('objectId') == clickedObjectId) {
-                    return
-                }
-                objectManager.objects.setObjectOptions(e.get('objectId'), {
-                    iconImageSize: projectIconSizeBig,
-                    iconImageOffset: projectIconOffsetBig
-                })
-            } else {
-                if (e.get('objectId') == clickedObjectId) {
-                    return
-                }
-                objectManager.objects.setObjectOptions(e.get('objectId'), {
-                    iconImageSize: projectIconSize,
-                    iconImageOffset: projectIconOffset
-                })
-            }
-        })
-
         const allSeen = getUsedProjects().concat(_seenGroupMy)
-
-        objectManager.objects.events.add(['add'], onObjectCollectionAdd)
-        objectManager.clusters.events.add('add', onAddCluster)
 
         const myBorders = ymaps.borders.load('RU', { lang: 'ru', quality: 2 })
 
@@ -1032,21 +969,7 @@ $(document).ready(function () {
             loadCompanies()
         }
 
-        map.geoObjects.add(objectManager)
-
-        map.events.add('click', hideFilters)
-        objectManager.clusters.events.add('click', onClusterClick)
-        objectManager.objects.events.add(['click'], onObjectClick)
-
         projects_global = []
-
-        $.ajax({
-            url: '/ymap/load?callback=?',
-            type: "GET",
-            dataType: "jsonp",
-            jsonpCallback: "getTotalFetures",
-            success: function (data) { getTotalFetures(data) }
-        })
 
         getCompanyData = function getCompanyData(ids) {
             appLoadScreen.loading()
@@ -1310,6 +1233,84 @@ $(document).ready(function () {
                 })
             })
         }
+
+        map.geoObjects.add(objectManager)
+
+        map.events.add('actionend', function (e) {
+            updateUrl()
+            hideFilters()
+            if (map.regionChanged) return
+            resetRecounter()
+
+            currentZoom = map.getZoom()
+        })
+
+        objectManager.clusters.events.add(['mouseenter', 'mouseleave'], function (e) {
+            var target = e.get('target'),
+                type = e.get('type')
+            if (type == 'mouseenter') {
+                if (e.get('objectId') == clickedObjectId) return
+                let cl = objectManager.clusters.getById(e.get('objectId'))
+
+                if (cl) objectManager.clusters.setClusterOptions(cl.id, {
+                    clusterIcons: [{
+                        href: cl.options.clusterIcons[0].href,
+                        size: clusterIconSizeBig,
+                        offset: clusterIconOffsetBig
+                    }],
+                    clusterIconContentLayout: MyClusterIconContentLayoutHover
+                })
+            } else {
+                if (e.get('objectId') == clickedObjectId) return
+                let cl = objectManager.clusters.getById(e.get('objectId'))
+
+                if (cl) objectManager.clusters.setClusterOptions(cl.id, {
+                    clusterIcons: [{
+                        href: cl.options.clusterIcons[0].href,
+                        size: projectIconSize,
+                        offset: projectIconOffset
+                    }],
+                    clusterIconContentLayout: MyClusterIconContentLayout
+                })
+            }
+        })
+
+        objectManager.objects.events.add(['mouseenter', 'mouseleave'], function (e) {
+            var type = e.get('type')
+
+            if (type == 'mouseenter') {
+                if (e.get('objectId') == clickedObjectId) {
+                    return
+                }
+                objectManager.objects.setObjectOptions(e.get('objectId'), {
+                    iconImageSize: projectIconSizeBig,
+                    iconImageOffset: projectIconOffsetBig
+                })
+            } else {
+                if (e.get('objectId') == clickedObjectId) {
+                    return
+                }
+                objectManager.objects.setObjectOptions(e.get('objectId'), {
+                    iconImageSize: projectIconSize,
+                    iconImageOffset: projectIconOffset
+                })
+            }
+        })
+
+        objectManager.objects.events.add(['add'], onObjectCollectionAdd)
+        objectManager.clusters.events.add('add', onAddCluster)
+
+        map.events.add('click', hideFilters)
+        objectManager.clusters.events.add('click', onClusterClick)
+        objectManager.objects.events.add(['click'], onObjectClick)
+
+        $.ajax({
+            url: '/ymap/load?callback=?',
+            type: "GET",
+            dataType: "jsonp",
+            jsonpCallback: "getTotalFetures",
+            success: function (data) { getTotalFetures(data) }
+        })
 
         setTimeout(() => { appLoadScreen.hide() }, 3000)
 

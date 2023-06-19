@@ -211,19 +211,20 @@ const app = {
         }
     },
 
+    /** @param {string} name  */
     getUrlParameter(name) {
-        let params = window.location.search
-            .replace('?', '')
-            .split('&')
-            .reduce(
-                function (p, e) {
-                    let a = e.split('=');
-                    p[decodeURIComponent(a[0])] = decodeURIComponent(a[1]);
-                    return p;
-                },
-                {}
-            );
-        return params[name]
+        /** like `['zoom=7', 'center=59.919999999982025%2C30.34130000000002', 'stages=17%2C2%2C3%2C7%2C4%2C13%2C14%2C15%2C16%2C19%2C8%2C6', 'laststages=', 'gos=4%2C1', 'layers=projects']` */
+        const paramToEncodedValue = window.location.search.replace('?', '').split('&')
+
+        /** @type {{[x: string]: string}} like `{zoom: '7', center: '59.919999999982025,30.34130000000002', stages: '17,2,3,7,4,13,14,15,16,19,8,6', laststages: '', gos: '4,1', …}` */
+        const paramToValue = {}
+
+        for (const encodedValue of paramToEncodedValue) {
+            const [property, value] = encodedValue.split('=')
+            if (property) paramToValue[decodeURIComponent(property)] = decodeURIComponent(value)
+        }
+
+        return name in paramToValue ? paramToValue[name] : undefined
     },
 
     stageSwitch() {
@@ -851,7 +852,7 @@ const app = {
 
     createFolderAddProjects(folder_name, projects, callback) {
         let self = this;
-        let c = (typeof callback == 'function' ? callback : function(ok) { });
+        let c = (typeof callback == 'function' ? callback : function (ok) { });
         self.createFolder(folder_name, function (folder_id) {
             self.addToFolderProjects(projects, folder_id, function () {
                 c(true);
