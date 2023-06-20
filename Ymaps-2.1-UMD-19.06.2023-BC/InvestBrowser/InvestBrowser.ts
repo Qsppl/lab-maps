@@ -10,7 +10,10 @@
  * - Реализует логику отображения данных на `Карте`
  */
 class InvestBrowser {
-    private static _projectsDataEndpoint = ['POST', `${app.en_prefix}/ajax/ymaps/get-projects-data`]
+    private static requests = {
+        'project-points-for-the-map': '/ymap/load-projects?bounds=%b'
+    }
+    // private static _projectsDataEndpoint = ['POST', `${app.en_prefix}/ajax/ymaps/get-projects-data`]
 
     /** ограничение просмотров проектов для незарегистрированных пользователей */
     private static limitOfProjectViews = 10;
@@ -30,5 +33,19 @@ class InvestBrowser {
                 browserUI.limitMapZoom()
             }
         }
+
+        this.showProjects()
+    }
+
+    private showProjects() {
+        const mapPointsLoader = this.createMapPointsLoader(InvestBrowser.requests["project-points-for-the-map"])
+        this._browserUI.placeOnMapAsProjects(mapPointsLoader)
+    }
+
+    private createMapPointsLoader(requesUrl: string) {
+        return new ymaps.objectManager.LoadingObjectManager(requesUrl, {
+            clusterize: true,
+            gridSize: 36
+        })
     }
 }
