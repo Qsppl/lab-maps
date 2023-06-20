@@ -67,14 +67,14 @@ const app = {
 
     /** уникальный id */
     uniqueId(pref) {
-        return (pref ? pref : '') + Math.random().toString(16).slice(2);
+        return (pref ? pref : '') + Math.random().toString(16).slice(2)
     },
 
     getCookie(name) {
         let matches = document.cookie.match(new RegExp(
             "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
-        ));
-        return matches ? decodeURIComponent(matches[1]) : undefined;
+        ))
+        return matches ? decodeURIComponent(matches[1]) : undefined
     },
 
     setCookie(name, value, options = {}) {
@@ -82,23 +82,23 @@ const app = {
             path: '/',
             // при необходимости добавьте другие значения по умолчанию
             ...options
-        };
-
-        if (options.expires instanceof Date) {
-            options.expires = options.expires.toUTCString();
         }
 
-        let updatedCookie = encodeURIComponent(name) + "=" + encodeURIComponent(value);
+        if (options.expires instanceof Date) {
+            options.expires = options.expires.toUTCString()
+        }
+
+        let updatedCookie = encodeURIComponent(name) + "=" + encodeURIComponent(value)
 
         for (let optionKey in options) {
-            updatedCookie += "; " + optionKey;
-            let optionValue = options[optionKey];
+            updatedCookie += "; " + optionKey
+            let optionValue = options[optionKey]
             if (optionValue !== true) {
-                updatedCookie += "=" + optionValue;
+                updatedCookie += "=" + optionValue
             }
         }
 
-        document.cookie = updatedCookie;
+        document.cookie = updatedCookie
     },
 
     t(str) {
@@ -109,40 +109,40 @@ const app = {
     },
 
     isIE() {
-        return navigator.userAgent.indexOf('MSIE') > -1 || navigator.userAgent.indexOf('Trident') > -1;
+        return navigator.userAgent.indexOf('MSIE') > -1 || navigator.userAgent.indexOf('Trident') > -1
     },
 
     onPageLoad(callback) {
         //$.cookie('base_coords')
-        app.cookieCoords = app.getCookie('base_coords1');
-        app.cookieCountry = app.getCookie('country');
-        app.$document.on('load', callback);
-        app.$document.on('pjax:end', callback);
+        app.cookieCoords = app.getCookie('base_coords1')
+        app.cookieCountry = app.getCookie('country')
+        app.$document.on('load', callback)
+        app.$document.on('pjax:end', callback)
     },
 
     onPageReady(callback) {
-        app.$document.ready(callback);
-        app.$document.on('pjax:end', callback);
+        app.$document.ready(callback)
+        app.$document.on('pjax:end', callback)
     },
 
     currentHref() {
-        return location.protocol + '//' + location.host + location.pathname;
+        return location.protocol + '//' + location.host + location.pathname
     },
 
     pjaxReload(container, url, timeout) {
-        if (!timeout) timeout = 60 * 6 * 1000;
+        if (!timeout) timeout = 60 * 6 * 1000
         if (!container) container = "#" +
-            $('[data-pjax-container]:first').prop('id');
-        let opts = { container: container, timeout: timeout };
+            $('[data-pjax-container]:first').prop('id')
+        let opts = { container: container, timeout: timeout }
         if (url) {
-            opts.url = url;
+            opts.url = url
         }
         if ($.support.pjax) {
-            $.pjax.reload(opts);
+            $.pjax.reload(opts)
         }
         else {
-            if (url) location.assign(url);
-            else location.reload();
+            if (url) location.assign(url)
+            else location.reload()
         }
 
     },
@@ -172,41 +172,41 @@ const app = {
     },
 
     debounce(f, ms) {
-        let timer = null;
+        let timer = null
         return function (arg) {
             const onComplete = function () {
-                f.apply(this, arg);
-                timer = null;
-            };
-            if (timer) {
-                clearTimeout(timer);
+                f.apply(this, arg)
+                timer = null
             }
-            timer = setTimeout(onComplete, ms);
-        };
+            if (timer) {
+                clearTimeout(timer)
+            }
+            timer = setTimeout(onComplete, ms)
+        }
     },
 
     parseUrl(href) {
-        href = decodeURIComponent(href);
-        let url = '', get = {}, hash = '';
+        href = decodeURIComponent(href)
+        let url = '', get = {}, hash = ''
 
-        let tmp = href.split('#');
-        if (tmp[1]) hash = tmp[1];
-        href = tmp[0];
+        let tmp = href.split('#')
+        if (tmp[1]) hash = tmp[1]
+        href = tmp[0]
 
-        tmp = href.split('?');
-        url = tmp[0];
+        tmp = href.split('?')
+        url = tmp[0]
         if (tmp[1]) {
-            get = app.parseSerialized(tmp[1]);
+            get = app.parseSerialized(tmp[1])
         }
         return {
             url: url,
             data: get,
             hash: hash,
             toString() {
-                let tmp = this.url;
-                if (this.data && !app.isEmptyObject(this.data)) tmp = tmp + '?' + $.param(this.data);
-                if (this.hash) tmp = tmp + '#' + this.hash;
-                return decodeURIComponent(tmp);
+                let tmp = this.url
+                if (this.data && !app.isEmptyObject(this.data)) tmp = tmp + '?' + $.param(this.data)
+                if (this.hash) tmp = tmp + '#' + this.hash
+                return decodeURIComponent(tmp)
             }
         }
     },
@@ -232,59 +232,59 @@ const app = {
     },
 
     parseSerialized(str) {
-        let get = {};
-        str = str.split('&');
-        let count = str.length;
+        let get = {}
+        str = str.split('&')
+        let count = str.length
         for (let i = 0; i < count; i++) {
-            let item = str[i];
-            item = item.split('=');
-            let key = item[0];
-            let value = null;
-            if (item.length > 1) value = item[1];
+            let item = str[i]
+            item = item.split('=')
+            let key = item[0]
+            let value = null
+            if (item.length > 1) value = item[1]
             if (key !== '') {
                 if (key.indexOf('[]') !== -1) {
-                    if (get[key] === undefined) get[key] = [];
+                    if (get[key] === undefined) get[key] = []
                     get[key].push(value)
                 }
                 else {
-                    get[key] = value;
+                    get[key] = value
                 }
             }
 
         }
-        return get;
+        return get
     },
 
     addGET(url, data) {
-        let href = app.parseUrl(url);
+        let href = app.parseUrl(url)
         for (let key in data) {
-            if (!data.hasOwnProperty(key)) continue;
+            if (!data.hasOwnProperty(key)) continue
             if (key.indexOf('[]') !== -1) {
                 if (href.data[key] !== undefined) {
-                    href.data[key].push(data[key]);
+                    href.data[key].push(data[key])
                 }
                 else {
-                    href.data[key] = [data[key]];
+                    href.data[key] = [data[key]]
                 }
             }
             else {
-                href.data[key] = data[key];
+                href.data[key] = data[key]
             }
         }
-        return href.toString();
+        return href.toString()
     },
 
     pushGET(data) {
-        let url = location.href;
-        url = app.addGET(url, data);
-        history.pushState(data, null, url);
+        let url = location.href
+        url = app.addGET(url, data)
+        history.pushState(data, null, url)
     },
 
     replaceGET(data) {
-        let url = app.parseUrl(location.href);
-        url.data = data;
-        url = url.toString();
-        history.pushState(data, null, url);
+        let url = app.parseUrl(location.href)
+        url.data = data
+        url = url.toString()
+        history.pushState(data, null, url)
     },
 
     getRandomFromRange(min, max) {
@@ -292,61 +292,61 @@ const app = {
     },
 
     pjaxContainer(id, timeout, url) {
-        let selector = '#' + id;
-        if (!timeout) timeout = 1000;
-        let $object = {};
+        let selector = '#' + id
+        if (!timeout) timeout = 1000
+        let $object = {}
         Object.defineProperty($object, 'id', {
             get() {
-                return id;
+                return id
             }
-        });
+        })
         Object.defineProperty($object, 'url', {
             get() {
-                return url;
+                return url
             }
-        });
+        })
         Object.defineProperty($object, 'selector', {
             get() {
-                return selector;
+                return selector
             }
-        });
+        })
         Object.defineProperty($object, 'obj', {
             get() {
-                return $(selector);
+                return $(selector)
             }
-        });
-        $object.timeout = timeout;
+        })
+        $object.timeout = timeout
         $object.reload = function () {
-            let opts = { container: selector, timeout: this.timeout };
-            return $.pjax.reload(opts);
-        };
+            let opts = { container: selector, timeout: this.timeout }
+            return $.pjax.reload(opts)
+        }
         $object.load = function (url, data, replaceUrl) {
-            if (!url) url = this.url;
-            if (!url) return this.reload;
+            if (!url) url = this.url
+            if (!url) return this.reload
             if (data) {
                 url = app.addGET(url, data)
             }
-            if (!replaceUrl) replaceUrl = false;
+            if (!replaceUrl) replaceUrl = false
             let opts = {
                 container: selector,
                 timeout: this.timeout,
                 url: url,
                 replace: replaceUrl
-            };
-            return $.pjax.reload(opts);
-        };
-        return $object;
+            }
+            return $.pjax.reload(opts)
+        }
+        return $object
     },
 
     isEmptyObject(object) {
-        for (let key in object) if (object.hasOwnProperty(key)) return false;
-        return true;
+        for (let key in object) if (object.hasOwnProperty(key)) return false
+        return true
     },
 
     timestampToLocal(timestamp) {
-        let offset = (new Date).getTimezoneOffset() * 6000;
-        timestamp = timestamp - offset;
-        return timestamp;
+        let offset = (new Date).getTimezoneOffset() * 6000
+        timestamp = timestamp - offset
+        return timestamp
     },
 
     emptyDomElement(elem) {
@@ -361,7 +361,7 @@ const app = {
             id = me.data('limit_id')
         let ids = [], data = null
         if (id.toString().indexOf(',') !== -1) {
-            ids = id.toString().replace(/(,\s)+/g, ',').split(',');
+            ids = id.toString().replace(/(,\s)+/g, ',').split(',')
         }
         let answer = null,
             type = me.data('limit_type') || type_p
@@ -378,7 +378,7 @@ const app = {
         let promise = new Promise(function (resolve) {
             $.post(app.en_prefix + '/ajax/site/check-limit', data)
                 .done(function (ans) {
-                    answer = JSON.parse(ans).data;//пихаем в замыкание ответ, вдруг понадобится
+                    answer = JSON.parse(ans).data//пихаем в замыкание ответ, вдруг понадобится
                     if (!answer) return
                     let isOk = false
                     if (answer.isOk) isOk = true
@@ -386,12 +386,12 @@ const app = {
                     callback(isOk, type, modalId)
                     resolve(modalId)
                 })
-                .fail(function (ans) { console.log('Check Limit Error: ' + ans); })
-                .always(function () { appLoadScreen.hide(); });
+                .fail(function (ans) { console.log('Check Limit Error: ' + ans) })
+                .always(function () { appLoadScreen.hide() })
         })
         return promise.then(
             function (result) {
-                appLoadScreen.hide();
+                appLoadScreen.hide()
                 return result
             }
         )
@@ -401,34 +401,34 @@ const app = {
 
     limitCheck(type, params = null) {
         if (typeof isProjectRead !== 'undefined' && isProjectRead === true && type === 'project') {
-            return;
+            return
         }
         if (typeof isCompanyRead !== 'undefined' && isCompanyRead === true && type === 'company') {
-            return;
+            return
         }
-        let csrfName = $("meta[name=csrf-param]").attr("content");
-        let csrfToken = $("meta[name=csrf-token]").attr("content");
+        let csrfName = $("meta[name=csrf-param]").attr("content")
+        let csrfToken = $("meta[name=csrf-token]").attr("content")
         let query_params = {
             limit_type: type,
             params: params,
-        };
-        query_params[csrfName] = csrfToken;
-        let $cnt = $('#ajaxModal');
-        let _self = this;
+        }
+        query_params[csrfName] = csrfToken
+        let $cnt = $('#ajaxModal')
+        let _self = this
 
         ///*if(typeof projectsQuantity === undefined)*/ let projectsQuantity = [];
         if (type && !_self.limitCheckInProgress) {
-            _self.limitCheckInProgress = true;
+            _self.limitCheckInProgress = true
             //appLoadScreen.loading()
             $.post(app.en_prefix + '/ajax/site/limit-check', query_params)
                 .done(function (data) {
-                    appLoadScreen.hide();
+                    appLoadScreen.hide()
                     try {
-                        data = JSON.parse(data).data;
+                        data = JSON.parse(data).data
                         if ($.inArray(data.data, [255, 355, 455]) == '-1') {
                             htmlId = data.id
-                            let a = 0;
-                            let $exist;
+                            let a = 0
+                            let $exist
                             /*do {
                                 $exist = $('#' + htmlId);
                                 if ($exist.length > 0) {
@@ -440,20 +440,20 @@ const app = {
                             } while ($exist.length > 0 && a < 5);*/
                             // откр модалку закр чат
                             if (typeof (TalkMe) == 'function') {
-                                TalkMe("closeSupport");
+                                TalkMe("closeSupport")
                             }
                             $cnt.html(data.data)
-                            $cnt.find('#' + htmlId).modal('show');
+                            $cnt.find('#' + htmlId).modal('show')
                         }
                     } catch (e) {
                         //console.error('err')
                     }
-                    _self.limitCheckInProgress = false;
+                    _self.limitCheckInProgress = false
                 }
                 ).fail(function () {
-                    _self.limitCheckInProgress = false;
-                    appLoadScreen.hide();
-                });
+                    _self.limitCheckInProgress = false
+                    appLoadScreen.hide()
+                })
         }
         //appLoadScreen.hide();
     },
@@ -469,16 +469,16 @@ const app = {
     },
 
     scrollTo(element_id, speed = null) {
-        if (!element_id) return false;
-        $('html, body').animate({ scrollTop: $('#' + element_id).offset().top - 50 }, speed ?? this.scroll_speed);
+        if (!element_id) return false
+        $('html, body').animate({ scrollTop: $('#' + element_id).offset().top - 50 }, speed ?? this.scroll_speed)
     },
 
     isIos() {
-        return ios;
+        return ios
     },
 
     isMobile() {
-        return testIsMobile();
+        return testIsMobile()
     },
 
     isMobileOrTablet() {
@@ -488,31 +488,31 @@ const app = {
     makeSelectLimit() {
 
         let fromSelect = $('.select-limit-from'),
-            toSelect = $('.select-limit-to');
+            toSelect = $('.select-limit-to')
         if (fromSelect.length < 1 || toSelect.length < 1) { return false };
-        disableOption();
+        disableOption()
 
         function disableOption() {
-            let selectFrom = fromSelect.children();
-            let selectTo = toSelect.children();
+            let selectFrom = fromSelect.children()
+            let selectTo = toSelect.children()
 
             const findSelected = function () {
-                return $(this).prop('selected');
-            };
+                return $(this).prop('selected')
+            }
 
-            let indexFrom = selectFrom.filter(findSelected).index();
-            let indexTo = selectTo.filter(findSelected).index();
+            let indexFrom = selectFrom.filter(findSelected).index()
+            let indexTo = selectTo.filter(findSelected).index()
 
-            selectFrom.removeAttr('disabled');
-            selectTo.removeAttr('disabled');
+            selectFrom.removeAttr('disabled')
+            selectTo.removeAttr('disabled')
 
-            selectFrom.eq(indexTo).nextAll('option').attr('disabled', 'disabled');
-            selectTo.eq(indexFrom).prevAll('option').attr('disabled', 'disabled');
+            selectFrom.eq(indexTo).nextAll('option').attr('disabled', 'disabled')
+            selectTo.eq(indexFrom).prevAll('option').attr('disabled', 'disabled')
         };
 
         $('.select-limit').on('change', function () {
             disableOption()
-        });
+        })
     },
 
     makeUrlName(name_en) {
@@ -538,12 +538,12 @@ const app = {
     /** раскрыть значение переменной если она задана замыканием */
     expandVar(value) {
         if (!value) {
-            return value;
+            return value
         }
         if (typeof value == "function") {
-            return value.call(this);
+            return value.call(this)
         }
-        return value;
+        return value
     },
 
     modal(_title, _content, _opt) {
@@ -559,55 +559,55 @@ const app = {
                     classes: 'btn btn-secondary'
                 }
             ],
-        }, _opt);
-        let t = '<div class="modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">';
-        let title = this.expandVar(_title);
-        let content = this.expandVar(_content);
+        }, _opt)
+        let t = '<div class="modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">'
+        let title = this.expandVar(_title)
+        let content = this.expandVar(_content)
         if (title) {
-            t += '<div class="modal-header"><h5 class="modal-title">' + title + '</h5>';
-            t += '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>';
+            t += '<div class="modal-header"><h5 class="modal-title">' + title + '</h5>'
+            t += '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
         }
-        t += '<div class="modal-body">' + content + '</div>';
-        t += '<div class="modal-footer">';
-        let countOnClick = 0;
-        const btnHandlers = {};
+        t += '<div class="modal-body">' + content + '</div>'
+        t += '<div class="modal-footer">'
+        let countOnClick = 0
+        const btnHandlers = {}
         for (let i in options.buttons) {
-            options.buttons[i]['id'] = options.buttons[i]['id'] ? options.buttons[i]['id'] : this.uniqueId('btn');
-            t += '<button type="button" class="' + this.expandVar(options.buttons[i]['classes']) + '" id="' + options.buttons[i]['id'] + '"';
+            options.buttons[i]['id'] = options.buttons[i]['id'] ? options.buttons[i]['id'] : this.uniqueId('btn')
+            t += '<button type="button" class="' + this.expandVar(options.buttons[i]['classes']) + '" id="' + options.buttons[i]['id'] + '"'
             if (this.expandVar(options.buttons[i]['dismiss'])) {
-                t += ' data-dismiss="modal"';
+                t += ' data-dismiss="modal"'
             }
-            t += '>' + this.expandVar(options.buttons[i]['text']) + '</button>';
+            t += '>' + this.expandVar(options.buttons[i]['text']) + '</button>'
             if (typeof options.buttons[i]['onClick'] == 'function') {
-                btnHandlers[options.buttons[i]['id']] = options.buttons[i]['onClick'];
-                countOnClick++;
+                btnHandlers[options.buttons[i]['id']] = options.buttons[i]['onClick']
+                countOnClick++
             }
         }
-        t += '</div>'; // btn
-        t += '</div></div></div>';
-        const domEl = $(t);
+        t += '</div>' // btn
+        t += '</div></div></div>'
+        const domEl = $(t)
         domEl.on('shown.bs.modal', function (e) {
-            options.onShow.call(this, domEl, options);
+            options.onShow.call(this, domEl, options)
         }).on('hidden.bs.modal', function (e) {
-            options.onHide.call(this, domEl, options);
-            domEl.remove();
-        });
+            options.onHide.call(this, domEl, options)
+            domEl.remove()
+        })
         if (countOnClick > 0) {
             domEl.on('click', function (e) {
-                console.log('win click', e);
-                let btnId = e.target.id;
+                console.log('win click', e)
+                let btnId = e.target.id
                 for (let i in btnHandlers) {
                     if (i == btnId) {
-                        (btnHandlers[i])(e, domEl);
-                        break;
+                        (btnHandlers[i])(e, domEl)
+                        break
                     }
                 }
-            });
+            })
         }
         if (options.start) {
-            domEl.modal('show');
+            domEl.modal('show')
         }
-        return domEl;
+        return domEl
     },
 
     deleteFolderPopupText: 'Вы собираетесь удалить папку. После этого папка исчезнет и Вы не сможете больше ей пользоваться. Подтвердите удаление',
@@ -650,20 +650,34 @@ const app = {
     },
 
     preloadImage(url) {
-        let img = new Image();
-        img.src = url;
+        let img = new Image()
+        img.src = url
     },
 
     /** загрузить скрипт и выполнить колбэк при загрузке */
     loadScript(url, callback) {
-        let script = document.createElement('script');
+        let script = document.createElement('script')
         if (callback) {
             script.onload = function () {
-                callback();
-            };
+                callback()
+            }
         }
-        script.src = url;
-        document.getElementsByTagName('head')[0].appendChild(script);
+        script.src = url
+        document.getElementsByTagName('head')[0].appendChild(script)
+    },
+
+    /**
+     * загрузить скрипт
+     * @param {string} url
+     * @returns {Promise<HTMLScriptElement>}
+     */
+    loadScriptPromise(url) {
+        return new Promise((resolve, reject) => {
+            let script = document.createElement('script')
+            script.onload = () => { resolve(script) }
+            script.src = url
+            document.getElementsByTagName('head')[0].appendChild(script)
+        })
     },
 
     requestBuy(callback, errorCallback) { // заявка на продление подписки
@@ -673,17 +687,17 @@ const app = {
             dataType: 'json',
             data: {},
             error() {
-                console.log("Error send request buys!");
+                console.log("Error send request buys!")
                 if (typeof errorCallback == 'function') {
-                    errorCallback();
+                    errorCallback()
                 }
             },
             success(res) {
                 if (typeof callback == 'function') {
-                    callback(res);
+                    callback(res)
                 }
             },
-        });
+        })
     },
 
     requestIncreaseLimit(limitName, callback, errorCallback) { // запрос на увеличение лимита
@@ -695,37 +709,37 @@ const app = {
                 limit: limitName
             },
             error() {
-                console.log("Error send request limit!");
+                console.log("Error send request limit!")
                 if (typeof errorCallback == 'function') {
-                    errorCallback();
+                    errorCallback()
                 }
             },
             success(res) {
                 if (typeof callback == 'function') {
-                    callback(res);
+                    callback(res)
                 }
             },
-        });
+        })
     },
 
     /** список id в виде массива */
     getIdArray(projects) {
-        let ids = [];
+        let ids = []
         if (typeof projects == 'object') {
             for (let i in projects) {
-                ids.push(projects[i]);
+                ids.push(projects[i])
             }
         } else {
-            ids = ids.push(projects);
+            ids = ids.push(projects)
         }
-        return ids;
+        return ids
     },
 
     /** проект(ы) в избранное/из избранного - projects = список или один id */
     toggleFavProjects(projects, callback) {
-        let ids = this.getIdArray(projects);
+        let ids = this.getIdArray(projects)
         if (ids.length == 0) {
-            return;
+            return
         }
         $.ajax({
             method: 'POST',
@@ -735,17 +749,17 @@ const app = {
             },
             success(data) {
                 if (typeof callback == 'function') {
-                    callback(data);
+                    callback(data)
                 }
             }
-        });
+        })
     },
 
     /** проект(ы) из архива/в архив */
     toggleArchiveProjects(projects, callback) {
-        let ids = this.getIdArray(projects);
+        let ids = this.getIdArray(projects)
         if (ids.length == 0) {
-            return;
+            return
         }
         $.ajax({
             method: 'POST',
@@ -755,15 +769,15 @@ const app = {
             },
             success(data) {
                 if (typeof callback == 'function') {
-                    callback(data);
+                    callback(data)
                 }
             }
-        });
+        })
     },
 
     /** создать папку - при успехе callbackSuccess получает id папки */
     createFolder(folder_name, callbackSuccess, callbackErr) {
-        let sendData = { folder: folder_name };
+        let sendData = { folder: folder_name }
         $.ajax({
             method: 'POST',
             url: app.en_prefix + '/ajax/projects/add_folder',
@@ -774,13 +788,13 @@ const app = {
                     if (data.data && data.data != false && data.data != 'unique_name_err') {
                         // ok
                         if (typeof callbackSuccess == 'function') {
-                            callbackSuccess(data.data); // id папки
+                            callbackSuccess(data.data) // id папки
                         }
                     } else {
                         if (typeof callbackErr == 'function') {
-                            let errMess = 'Название папки должно состоять из 3 или более символов!';
+                            let errMess = 'Название папки должно состоять из 3 или более символов!'
                             if (data.data == 'unique_name_err') {
-                                errMess = 'Такое название папки уже используется Вами или Вашими коллегами';
+                                errMess = 'Такое название папки уже используется Вами или Вашими коллегами'
                             }
                             callbackErr(data.data, errMess)
                         }
@@ -788,17 +802,17 @@ const app = {
                 } catch (e) {
                     //return false;
                     if (typeof callbackErr == 'function') {
-                        callbackErr(false, '');
+                        callbackErr(false, '')
                     }
                 }
             }
-        });
+        })
     },
 
     removeFromFolderProjects(projects, callback) {
-        let ids = this.getIdArray(projects);
+        let ids = this.getIdArray(projects)
         if (ids.length == 0) {
-            return;
+            return
         }
         $.ajax({
             method: 'POST',
@@ -808,15 +822,15 @@ const app = {
             },
             success(data) {
                 if (typeof callback == 'function') {
-                    callback(data);
+                    callback(data)
                 }
             }
-        });
+        })
     },
 
     /** добавить проекты в в папку */
     addToFolderProjectsOld(projects, folder, callback) {
-        let ids = this.getIdArray(projects);
+        let ids = this.getIdArray(projects)
         $.ajax({
             method: 'POST',
             url: app.en_prefix + '/ajax/projects/add_to_folder',
@@ -826,15 +840,15 @@ const app = {
             },
             success(data) {
                 if (typeof callback == 'function') {
-                    callback(data);
+                    callback(data)
                 }
             }
-        });
+        })
     },
 
     /** добавить проекты в в папку */
     addToFolderProjects(projects, folder, callback) {
-        let ids = this.getIdArray(projects);
+        let ids = this.getIdArray(projects)
         $.ajax({
             method: 'POST',
             url: app.en_prefix + '/ajax/projects/add-to-folder',
@@ -844,27 +858,27 @@ const app = {
             },
             success(data) {
                 if (typeof callback == 'function') {
-                    callback(data);
+                    callback(data)
                 }
             }
-        });
+        })
     },
 
     createFolderAddProjects(folder_name, projects, callback) {
-        let self = this;
-        let c = (typeof callback == 'function' ? callback : function (ok) { });
+        let self = this
+        let c = (typeof callback == 'function' ? callback : function (ok) { })
         self.createFolder(folder_name, function (folder_id) {
             self.addToFolderProjects(projects, folder_id, function () {
-                c(true);
-            });
+                c(true)
+            })
         }, function (data, mess) {
-            c(false);
-        });
+            c(false)
+        })
     },
 
     /** добавить проекты в папку и одновременно убрать из остальных */
     addToFolderWithDelOtherProjects(projects, folder, callback) {
-        let ids = this.getIdArray(projects);
+        let ids = this.getIdArray(projects)
         $.ajax({
             method: 'POST',
             url: app.en_prefix + '/ajax/projects/add-to-folder-with-delete',
@@ -874,65 +888,65 @@ const app = {
             },
             success(data) {
                 if (typeof callback == 'function') {
-                    callback(data);
+                    callback(data)
                 }
             }
-        });
+        })
     },
 
     /** компании в/из избранное */
     toggleFavCompanies(companies, callback) {
-        let ids = this.getIdArray(companies);
+        let ids = this.getIdArray(companies)
         if (ids.length == 0) {
-            return;
+            return
         }
         let reqParams = {
             company_id: ids
-        };
+        }
         $.ajax({
             url: '/ajax/folders-widget/company-toggle-fav',
             type: 'POST',
             data: reqParams,
             error() {
-                console.log("Error update!");
+                console.log("Error update!")
             },
             success(res) {
                 if (typeof callback == 'function') {
-                    callback(res);
+                    callback(res)
                 }
             },
-        });
+        })
     },
 
     /** компании в/из избранное */
     toggleArchiveCompanies(companies, callback) {
-        let ids = this.getIdArray(companies);
+        let ids = this.getIdArray(companies)
         if (ids.length == 0) {
-            return;
+            return
         }
         let reqParams = {
             company_id: ids
-        };
+        }
         $.ajax({
             url: '/ajax/folders-widget/company-toggle-archive',
             type: 'POST',
             data: reqParams,
             error() {
-                console.log("Error update!");
+                console.log("Error update!")
             },
             success(res) {
                 if (typeof callback == 'function') {
-                    callback(res);
+                    callback(res)
                 }
             },
-        });
+        })
     },
 
     /** компании из папки */
     removeFromFolderCompanies(companies, callback) {
-        let ids = this.getIdArray(companies);
+        let ids = this.getIdArray(companies)
         if (ids.length == 0) {
-            return;
+            return
         }
         let reqParams = {
             company_id: ids
@@ -942,30 +956,44 @@ const app = {
             type: 'POST',
             data: reqParams,
             error() {
-                console.log("Error update!");
+                console.log("Error update!")
             },
             success(res) {
                 if (typeof callback == 'function') {
-                    callback(res);
+                    callback(res)
                 }
             },
-        });
+        })
     },
 
     initOperationBlocked() {
         this.$body.on('click', '[data-operation-blocked]', function (e) {
-            let btn = this;
-            let text = 'Действие не доступно';
+            let btn = this
+            let text = 'Действие не доступно'
             if (typeof btn.dataset.blockedMessage != 'undefined') {
-                text = btn.dataset.blockedMessage;
+                text = btn.dataset.blockedMessage
             }
-            let title = 'Запрещено';
+            let title = 'Запрещено'
             if (typeof btn.dataset.blockedTitle != 'undefined') {
-                title = btn.dataset.blockedTitle;
+                title = btn.dataset.blockedTitle
             }
-            app.showToast(title, text, 'error', 'mid-center');
-            e.preventDefault();
-            e.stopPropagation();
-        });
+            app.showToast(title, text, 'error', 'mid-center')
+            e.preventDefault()
+            e.stopPropagation()
+        })
+    },
+
+    /**
+     * @param {string} selectors 
+     * @returns {Promise<HTMLElement | null>}
+     */
+    querySelectorPromise(selectors) {
+        if (typeof selectors !== 'string') new TypeError()
+        return new Promise((resolve, reject) => {
+            if (document.readyState === "complete") resolve(document.querySelector(selectors))
+            else document.addEventListener('DOMContentLoaded', () => {
+                resolve(document.querySelector(selectors))
+            })
+        })
     }
 }

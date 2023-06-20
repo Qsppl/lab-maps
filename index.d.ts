@@ -121,8 +121,8 @@ declare const isDemo: boolean | undefined
 /** @type {boolean | undefined} Не удалось определить что это. */
 declare const needToClean: boolean | undefined
 
-/** @type {boolean | undefined} Не удалось определить что это. */
-declare var isZoomRestricted: boolean | undefined
+/** @type {boolean | undefined} Пользователь потратил дневной лимит просмотра проектов. */
+declare const isUserSpentDailyLimit: boolean | undefined
 
 declare const g_subs_regions: any
 

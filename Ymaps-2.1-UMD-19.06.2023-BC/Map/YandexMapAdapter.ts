@@ -1,25 +1,6 @@
-import ymaps, { IMapState } from "yandex-maps";
-import { IMap } from "../InvestprojectsBrowser/IMap";
-import { CustomControlClass } from "../InvestprojectsBrowserUI/CustomControlClass";
-import { findElementAfterDocumentLoad } from "../lib/asyncTools"
-
-type localizationAsset = { 'zoom-in-is-limited': string; 'zoom-out-is-limited': string }
-
 /** Класс инкапсулирующий логику управления картой. */
-export class YandexMapAdapter implements IMap {
-    static localizationAssets: { [k in 'ru' | 'en']: localizationAsset } = {
-        ru: {
-            'zoom-in-is-limited': 'Увеличение ограничено из-за окончания лимитов работы с картой',
-            'zoom-out-is-limited': 'Максимальное отдаление карты',
-        },
-        en: {
-            'zoom-in-is-limited': 'Zooming is limited due to the end of the limits of working with the card',
-            'zoom-out-is-limited': 'Maximum map distance',
-        }
-    }
-
-    static center = [59.92, 30.3413]
-    static anotherCenter = [55, 100]
+class YandexMapAdapter implements IInvestBrowserMap, IInvestBrowserUIMap {
+    private static center = [59.92, 30.3413]
 
     static zoomConfigs: { [k in 'default' | 'restricted' | 'region']: { minZoom: number, middleZoom: number, maxZoom: number } } = {
         default: { minZoom: 4, middleZoom: 7, maxZoom: 18 },
@@ -32,12 +13,10 @@ export class YandexMapAdapter implements IMap {
 
     _yandexMap: Promise<ymaps.Map>
 
-    _localizationAsset: localizationAsset;
+    _localizationAsset
 
-    constructor(containerElement: HTMLElement | string, isZoomRestricted: boolean) {
-        this._localizationAsset = app.languageLocale === 'en'
-            ? YandexMapAdapter.localizationAssets.en
-            : YandexMapAdapter.localizationAssets.ru
+    constructor(containerElement: HTMLElement | string) {
+        this._localizationAsset = YandexMapAdapter.localizationAssets['']
 
         this._yandexMap = findElementAfterDocumentLoad(containerElement)
             .then(element => { return YandexMapAdapter._createMapInstance(element, { controls: YandexMapAdapter.controls }) })
@@ -70,7 +49,7 @@ export class YandexMapAdapter implements IMap {
         if (zoom <= minZoom) zoom = minZoom
         const promise = map.setCenter(x, y, zoom)
         promise.then(() => { map.events.fire('actionend') })
-        return promise;
+        return promise
     }
 
     async moveToAnotherCenter() {
@@ -79,7 +58,7 @@ export class YandexMapAdapter implements IMap {
     }
 
     async moveMapToRegion([x, y]) {
-        console.table('fire actionend 2');
+        console.table('fire actionend 2')
         return this.moveTo([x, y], YandexMapAdapter.zoomConfigs.region.middleZoom)
     }
 
@@ -87,7 +66,7 @@ export class YandexMapAdapter implements IMap {
         if (zoomIn && zoomIn.limit && zoomIn.warningMessage) this._localizationAsset['zoom-in-is-limited'] = zoomIn.warningMessage
         if (zoomOut && zoomOut.limit && zoomOut.warningMessage) this._localizationAsset['zoom-out-is-limited'] = zoomOut.warningMessage
 
-        const map = await this._yandexMap;
+        const map = await this._yandexMap
         if (zoomIn && zoomIn.limit) map.options.set({ maxZoom: zoomIn.limit })
         if (zoomOut && zoomOut.limit) map.options.set({ minZoom: zoomOut.limit })
     }
@@ -121,7 +100,7 @@ export class YandexMapAdapter implements IMap {
 
     /** Обертка для типизации и асинхронности. */
     static async _createMapInstance(containerElement: HTMLElement, state: IMapState): Promise<ymaps.Map> {
-        await ymaps.ready();
-        return new ymaps.Map(containerElement, state);
+        await ymaps.ready()
+        return new ymaps.Map(containerElement, state)
     }
 }
