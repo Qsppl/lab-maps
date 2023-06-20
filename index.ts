@@ -25,7 +25,7 @@ var MyClusterIconContentLayout: null | ymaps.IClassConstructor<ymaps.layout.temp
 var MyClusterIconContentLayoutHover: null | ymaps.IClassConstructor<ymaps.layout.templateBased.Base> = null
 
 var map: null | ymaps.Map = null
-var objectManager: null | YmapsExtendedNS.LoadingObjectManager<ymaps.IGeometry> = null
+var objectManager: null | ymaps.LoadingObjectManager<ymaps.IGeometry> = null
 var objectManagerZones = null
 const companiesPlacemarks = []
 const inServicePlacemarks = []
