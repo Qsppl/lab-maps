@@ -919,7 +919,7 @@ $(document).ready(function () {
             + '{% endif %}'
         )
 
-        objectManager = new ymapsExtended.LoadingObjectManager('/ymap/load?bounds=%b', {
+        objectManager = new ymaps.LoadingObjectManager('/ymap/load?bounds=%b', {
             clusterize: true,
             hasBalloon: false,
             gridSize: gridSize,
