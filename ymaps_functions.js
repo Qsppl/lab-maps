@@ -17,6 +17,15 @@ const clusterIconOffsetBigHover = [-20, -20]
 
 const clusterFontSize = '7px'
 
+/**
+ * 
+ * @param {string} type 
+ * @param {number} stage 
+ * @param {string} typeVisited 
+ * @param {Feature} feature 
+ * @param {boolean} isFolder 
+ * @returns 
+ */
 function getIconPath(type = 'p', stage = 2, typeVisited = 'normal', feature = null, isFolder = false) {
     let path = prodImgPath//localImgPath
 

@@ -1,5 +1,7 @@
 'use strict'
 
+const usedProjects: number[] = []
+
 var textFile = null
 
 var balloon: null | ymaps.Balloon = null
@@ -25,7 +27,7 @@ var MyClusterIconContentLayout: null | ymaps.IClassConstructor<ymaps.layout.temp
 var MyClusterIconContentLayoutHover: null | ymaps.IClassConstructor<ymaps.layout.templateBased.Base> = null
 
 var map: null | ymaps.Map = null
-var objectManager: null | ymaps.LoadingObjectManager<ymaps.IGeometry> = null
+var objectManager: null | ymaps.objectManager.LoadingObjectManager<ymaps.IGeometry, Feature> = null
 var objectManagerZones = null
 const companiesPlacemarks = []
 const inServicePlacemarks = []
@@ -110,9 +112,9 @@ const gosByCode = {
     3: 4
 }
 
-let clickedObjectId = null
-let clickedObjectType = null
-let clickedObjectStage = null
+let clickedObjectId: null | number = null
+let clickedObjectType: null | string = null
+let clickedObjectStage: null | number = null
 let clicked_balloon = null
 let currentTypingRadius = 0
 let totalFilteredProjects = 0
@@ -291,36 +293,42 @@ $(document).ready(function () {
     })
 
     /** уже нажатые проекты из сторэджа */
-    ymaps.usedProjects = getUsedProjects()
-    if (!ymaps.usedProjects) ymaps.usedProjects = []
+    usedProjects.push(...getUsedProjects())
 
-    globalThis.setActiveIcon = function setActiveIcon(type, obj) {
+    globalThis.setActiveIcon = function setActiveIcon(type: string, obj) {
         if (type === 'cluster') {
-            let foundInCluster = false
             if (!objectManager) return false
-            objectManager.clusters.each((obj) => {
-                obj.features.forEach((feature) => {
-                    if (+feature.id === +get_project_id || clickedObjectId == +obj.id) {
-                        foundInCluster = true
-                        clickedObjectId = +obj.id
-                        clickedObjectType = 'cluster'
-                        objectManager.clusters.setClusterOptions(+obj.id, {
-                            clusterIcons: [{
-                                href: getIconPath('c', null, 'active', feature, isProjectInAnyFolder(feature.id)),
-                                size: clusterIconSizeBig,
-                                fontSize: clusterFontSize,
-                                offset: clusterIconOffsetBig
-                            }]
-                        })
-                        return true
-                    }
-                })
+
+            let foundInCluster = false
+
+            objectManager.clusters.each((feathureCollection) => {
+                if (!objectManager) return
+
+                for (const feature of feathureCollection.features) {
+                    if ((get_project_id && (+feature.id !== +get_project_id)) && (clickedObjectId != +feathureCollection.id)) continue
+
+                    foundInCluster = true
+                    clickedObjectId = +feathureCollection.id
+                    clickedObjectType = 'cluster'
+                    objectManager.clusters.setClusterOptions(feathureCollection.id, {
+                        clusterIcons: [{
+                            href: getIconPath('c', undefined, 'active', feature, isProjectInAnyFolder(feature.id)),
+                            size: clusterIconSizeBig,
+                            fontSize: clusterFontSize,
+                            offset: clusterIconOffsetBig
+                        }]
+                    })
+                    break
+                }
             })
+
             return foundInCluster
         } else if (type === 'project') {
-            objectManager.objects.each((obj) => {
-                if (+obj.properties.clusterCaption === +get_project_id) {
-                    foundInCluster = true
+            if (objectManager === null) return
+            objectManager.objects.each((obj: any) => {
+                if (objectManager === null) return
+                if (get_project_id && +get_project_id === +obj.properties.clusterCaption) {
+                    globalThis.foundInCluster = true
                     clickedObjectId = +obj.id
                     clickedObjectStage = +obj.t
                     clickedObjectType = 'project'
@@ -332,8 +340,7 @@ $(document).ready(function () {
                 }
             })
         } else if (type === 'zone') {
-            zonesModel?.objectManager?.objects.each((corruptedObject: any) => {
-                const object: Feature = corruptedObject
+            zonesModel?.objectManager?.objects.each((object: any) => {
                 if ((object.id == +(get_zone_id || '')) && balloon && !balloon.isOpen() && needOpenBaloon) {
                     needOpenBaloon = false
                     balloon.open(
@@ -411,9 +418,10 @@ $(document).ready(function () {
     loadProdAddressPanel(companyProdAddresses)
 
 
-    $('#map').on('wheel', function (e) {
+    $('#map').on('wheel', function (e: any) {
+        if (!map) return
         const currentZoom = map.getZoom()
-        const wheelD = e.originalEvent.wheelDelta < 0
+        const wheelD = e.originalEvent && e.originalEvent.wheelDelta < 0
 
         if (wheelD && currentZoom <= minZoom) {
             app.showToast(app.t('Максимальное отдаление карты'), null, 'info', 'bottom-right')
@@ -435,7 +443,7 @@ $(document).ready(function () {
     searchBox.on('keyup', function (e) {
         e.preventDefault()
         const me = $(this)
-        const val = $.trim(me.val())
+        const val = $.trim(String(me.val()))
 
         if (val == '') return
 
@@ -1456,7 +1464,7 @@ $(document).ready(function () {
             // запишем ид для аналитики
             if (ymaps.cp_instance) ymaps.cp_instance.addIdsToClicked([object.id])
 
-            addUsedProjects([object.id])
+            addUsedProjects([...usedProjects, object.id])
             clicked_balloon = object
             // смена иконки при клике на ОБЪЕКТ
             clickedObjectId = e.get('objectId')
@@ -1511,7 +1519,7 @@ $(document).ready(function () {
             get_project_id = featuresIds[0]
 
             getProjectsData(featuresIds)
-            addUsedProjects(featuresIds)
+            addUsedProjects(...usedProjects, featuresIds)
 
             // запишем ид для аналитики
             if (ymaps.cp_instance) ymaps.cp_instance.addIdsToClicked(featuresIds)
@@ -1805,14 +1813,14 @@ function makeTextFile(text) {
     return textFile
 }
 
-function applyFilter(callback = []) {
+function applyFilter(callbacks: CallableFunction[] = []) {
     totalFilteredProjects = 0
     objectManager.setFilter(filtrateWrap())
 
     if ($('input[value="industrials"]').is(":checked")) {
         zonesModel.update(setLVRV)
     }
-    callback.map(callback => callback())
+    callbacks.map(callback => callback())
 }
 
 function changeLayers() {
