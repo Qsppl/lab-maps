@@ -53,7 +53,7 @@ class InvestBrowserUI implements IInvestBrowserUI {
     }
 
     limitMapZoom() {
-        
+
     }
 
     async showRestrictionNotice() {
@@ -81,6 +81,14 @@ class InvestBrowserUI implements IInvestBrowserUI {
         //             })
         //             .fail(function () { console.log('fail ajax fp') })
         //     }
+    }
+
+    decoratePointsLoader(pointsLoader: ymaps.objectManager.LoadingObjectManager<ymaps.IGeometry>) {
+        return new InvestBrowserUIPointsDecorator(pointsLoader)
+    }
+
+    addPointsLoaderToMap(pointsLoader: ymaps.objectManager.LoadingObjectManager<ymaps.IGeometry>): void {
+        this._map.addPointsLoader(pointsLoader)
     }
 
     static doSomething1() {

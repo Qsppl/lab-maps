@@ -1,4 +1,4 @@
-{'use strict'
+'use strict'
 
 const usedProjects: number[] = []
 
@@ -27,7 +27,7 @@ var MyClusterIconContentLayout: null | ymaps.IClassConstructor<ymaps.layout.temp
 var MyClusterIconContentLayoutHover: null | ymaps.IClassConstructor<ymaps.layout.templateBased.Base> = null
 
 var map: null | ymaps.Map = null
-var objectManager: null | ymaps.objectManager.LoadingObjectManager<ymaps.IGeometry, Feature> = null
+var objectManager: null | ymaps.objectManager.LoadingObjectManager<ymaps.IGeometry> = null
 var objectManagerZones = null
 const companiesPlacemarks = []
 const inServicePlacemarks = []
@@ -112,7 +112,7 @@ const gosByCode = {
     3: 4
 }
 
-let clickedObjectId: null | number = null
+let clickedObjectId: null | string = null
 let clickedObjectType: null | string = null
 let clickedObjectStage: null | number = null
 let clicked_balloon = null
@@ -304,11 +304,11 @@ $(document).ready(function () {
             objectManager.clusters.each((feathureCollection) => {
                 if (!objectManager) return
 
-                for (const feature of feathureCollection.features) {
-                    if ((get_project_id && (+feature.id !== +get_project_id)) && (clickedObjectId != +feathureCollection.id)) continue
+                for (const feature of feathureCollection.properties.geoObjects) {
+                    if ((get_project_id && (+feature.id !== +get_project_id)) && (clickedObjectId != feathureCollection.id)) continue
 
                     foundInCluster = true
-                    clickedObjectId = +feathureCollection.id
+                    clickedObjectId = feathureCollection.id
                     clickedObjectType = 'cluster'
                     objectManager.clusters.setClusterOptions(feathureCollection.id, {
                         clusterIcons: [{
@@ -325,11 +325,11 @@ $(document).ready(function () {
             return foundInCluster
         } else if (type === 'project') {
             if (objectManager === null) return
-            objectManager.objects.each((obj: any) => {
+            objectManager.objects.each((obj) => {
                 if (objectManager === null) return
                 if (get_project_id && +get_project_id === +obj.properties.clusterCaption) {
                     globalThis.foundInCluster = true
-                    clickedObjectId = +obj.id
+                    clickedObjectId = obj.id
                     clickedObjectStage = +obj.t
                     clickedObjectType = 'project'
                     objectManager.objects.setObjectOptions(obj.id, {
@@ -843,36 +843,36 @@ $(document).ready(function () {
         let base_coords = [59.92, 30.3413]
         let base_zoom = 7
 
-        // if (!get_x && !get_y && companyProdAddresses) {
-        //     companyProdAddresses.forEach((addr) => {
-        //         base_coords = [+addr.map_x, +addr.map_y]
-        //         base_zoom = 7
-        //     })
-        // } else if (get_x && get_y) {
-        //     if (get_project_id) needOpenProject = true
-        //     base_coords = [+get_x, +get_y]
-        //     base_zoom = 11
-        // }
+        if (!get_x && !get_y && companyProdAddresses) {
+            // companyProdAddresses.forEach((addr) => {
+            //     base_coords = [+addr.map_x, +addr.map_y]
+            //     base_zoom = 7
+            // })
+        } else if (get_x && get_y) {
+            // if (get_project_id) needOpenProject = true
+            // base_coords = [+get_x, +get_y]
+            // base_zoom = 11
+        }
 
-        // if (isGuest) {
-        //     base_coords = [59.92, 30.3413]
-        //     base_zoom = 7
-        // }
+        if (isGuest) {
+            // base_coords = [59.92, 30.3413]
+            // base_zoom = 7
+        }
 
-        // if (projects_to_map && projects_to_map.length > 1) {
-        //     base_coords = [59.92, 60.3413]
-        //     base_zoom = 7
-        // }
+        if (projects_to_map && projects_to_map.length > 1) {
+            // base_coords = [59.92, 60.3413]
+            // base_zoom = 7
+        }
 
-        // if (!isGuest && app.getUrlParameter('center')) {
-        //     /** Url deserialized param 'center' */
-        //     base_coords = app.getUrlParameter('center').split(',').map((value) => +value)
-        // }
+        if (!isGuest && app.getUrlParameter('center')) {
+            // /** Url deserialized param 'center' */
+            // base_coords = app.getUrlParameter('center').split(',').map((value) => +value)
+        }
 
-        // if (!isGuest && app.getUrlParameter('zoom')) {
-        //     /** Url deserialized param 'zoom' */
-        //     base_zoom = +(app.getUrlParameter('zoom'))
-        // }
+        if (!isGuest && app.getUrlParameter('zoom')) {
+            // /** Url deserialized param 'zoom' */
+            // base_zoom = +(app.getUrlParameter('zoom'))
+        }
 
         map = new ymaps.Map('map', {
             center: base_coords,
@@ -903,76 +903,76 @@ $(document).ready(function () {
         // selected_country = getFilter_country[0] ? getFilter_country.map(t => +t) : country_global.map(t => +t.code)
         // selected_layers = firstLoadLayers[0] ? firstLoadLayers.map(t => t) : ['projects']
 
-        // MyClusterIconContentLayout = ymaps.templateLayoutFactory.createClass(
-        //     '{% if properties.geoObjects.length > 100 %}'
-        //     + '<div style="color:FF00FF;font-size:10px;">99+</div>'
-        //     + '{% else %}'
-        //     + '<div style="color:FF00FF;font-size:11px;">{{ properties.geoObjects.length }}</div>'
-        //     + '{% endif %}'
-        // )
+        MyClusterIconContentLayout = ymaps.templateLayoutFactory.createClass(
+            '{% if properties.geoObjects.length > 100 %}'
+            + '<div style="color:FF00FF;font-size:10px;">99+</div>'
+            + '{% else %}'
+            + '<div style="color:FF00FF;font-size:11px;">{{ properties.geoObjects.length }}</div>'
+            + '{% endif %}'
+        )
 
-        // MyClusterIconContentLayoutHover = ymaps.templateLayoutFactory.createClass(
-        //     '{% if properties.geoObjects.length > 100 %}'
-        //     + '<div style="color:FF00FF;font-size:14px;">99+</div>'
-        //     + '{% else %}'
-        //     + '<div style="color:FF00FF;font-size:15px;">{{ properties.geoObjects.length }}</div>'
-        //     + '{% endif %}'
-        // )
+        MyClusterIconContentLayoutHover = ymaps.templateLayoutFactory.createClass(
+            '{% if properties.geoObjects.length > 100 %}'
+            + '<div style="color:FF00FF;font-size:14px;">99+</div>'
+            + '{% else %}'
+            + '<div style="color:FF00FF;font-size:15px;">{{ properties.geoObjects.length }}</div>'
+            + '{% endif %}'
+        )
 
         objectManager = new ymaps.objectManager.LoadingObjectManager('/ymap/load?bounds=%b', {
             clusterize: true,
             gridSize: gridSize
         })
 
-        // objectManager.clusters.options.set({
-        //     clusterIcons: [{
-        //         href: getIconPath('c', null, 'normal', null, false),
-        //         size: clusterIconSize,
-        //         fontSize: clusterFontSize,
-        //         font: clusterFontSize,
-        //         offset: clusterIconOffset,
-        //     }],
-        //     clusterIconContentLayout: MyClusterIconContentLayout
-        // })
+        objectManager.clusters.options.set({
+            clusterIcons: [{
+                href: getIconPath('c', null, 'normal', null, false),
+                size: clusterIconSize,
+                fontSize: clusterFontSize,
+                font: clusterFontSize,
+                offset: clusterIconOffset,
+            }],
+            clusterIconContentLayout: MyClusterIconContentLayout
+        })
 
-        // objectManager.objects.options.set({
-        //     'iconLayout': 'default#image',
-        //     'iconImageSize': projectIconSize
-        // })
+        objectManager.objects.options.set({
+            'iconLayout': 'default#image',
+            'iconImageSize': projectIconSize
+        })
 
         // const allSeen = getUsedProjects().concat(_seenGroupMy)
 
         // const myBorders = ymaps.borders.load('RU', { lang: 'ru', quality: 2 })
 
-        // if (isGuest) {
-        //     if (app.cookieCoords) {
-        //         if (app.cookieCoords !== 'undefined') {
-        //             detectGuestRegion(app.getCookie('region'))
-        //         }
-        //     } else {
-        //         $.get('https://api.sypexgeo.net/4Rc1A/json/', function () { }, 'json')
-        //             .done(function (resp) {
-        //                 if (typeof resp.city !== 'undefined') {
-        //                     app.setCookie('base_coords1', [resp.city.lat, resp.city.lon])
-        //                     app.cookieCoords = [resp.city.lat, resp.city.lon]
-        //                     app.setCookie('country', resp.country.iso)
-        //                     app.cookieCountry = resp.country.iso
-        //                     app.setCookie('region', resp.region.name_ru)
-        //                     detectGuestRegion(resp.region.name_ru, resp.city.lat, resp.city.lon)
-        //                 } else {
-        //                     app.setCookie('base_coords1', 'undefined')
-        //                 }
-        //             })
-        //             .fail(function () {
-        //                 app.setCookie('base_coords1', 'undefined')
-        //             })
-        //     }
-        // } else {
-        //     getFilters(true)
-        //     applyFilter()
-        //     changeLayers()
-        //     loadCompanies()
-        // }
+        if (isGuest) {
+            // if (app.cookieCoords) {
+            //     if (app.cookieCoords !== 'undefined') {
+            //         detectGuestRegion(app.getCookie('region'))
+            //     }
+            // } else {
+            //     $.get('https://api.sypexgeo.net/4Rc1A/json/', function () { }, 'json')
+            //         .done(function (resp) {
+            //             if (typeof resp.city !== 'undefined') {
+            //                 app.setCookie('base_coords1', [resp.city.lat, resp.city.lon])
+            //                 app.cookieCoords = [resp.city.lat, resp.city.lon]
+            //                 app.setCookie('country', resp.country.iso)
+            //                 app.cookieCountry = resp.country.iso
+            //                 app.setCookie('region', resp.region.name_ru)
+            //                 detectGuestRegion(resp.region.name_ru, resp.city.lat, resp.city.lon)
+            //             } else {
+            //                 app.setCookie('base_coords1', 'undefined')
+            //             }
+            //         })
+            //         .fail(function () {
+            //             app.setCookie('base_coords1', 'undefined')
+            //         })
+            // }
+        } else {
+            // getFilters(true)
+            // applyFilter()
+            // changeLayers()
+            // loadCompanies()
+        }
 
         // projects_global = []
 
@@ -1053,191 +1053,191 @@ $(document).ready(function () {
 
         // addWHToTheMap(companyProdAddresses, ymaps.Placemark)
 
-        // if (needOpenProject || get_project_id) {
-        //     // тыкнули проект с карточки проекта, нужно его открыть
-        //     const callbackOpenProject = () => {
-        //         if (!setActiveIcon('cluster')) {
-        //             setActiveIcon('project')
-        //         }
-        //     }
-        //     getProjectsData([get_project_id], callbackOpenProject)
-        //     // СДЕЛАТЬ ПРОЕКТ АКТИВНЫМ ПРИ ПЕРЕХОДЕ С КАРТОЧКИ
-        //     setTimeout(function () {
-        //         if (!setActiveIcon('cluster')) {
-        //             setActiveIcon('project')
-        //         }
-        //     }, 2800)
-        // }
+        if (needOpenProject || get_project_id) {
+            // // тыкнули проект с карточки проекта, нужно его открыть
+            // const callbackOpenProject = () => {
+            //     if (!setActiveIcon('cluster')) {
+            //         setActiveIcon('project')
+            //     }
+            // }
+            // getProjectsData([get_project_id], callbackOpenProject)
+            // // СДЕЛАТЬ ПРОЕКТ АКТИВНЫМ ПРИ ПЕРЕХОДЕ С КАРТОЧКИ
+            // setTimeout(function () {
+            //     if (!setActiveIcon('cluster')) {
+            //         setActiveIcon('project')
+            //     }
+            // }, 2800)
+        }
 
         // let industrialsOnMap = new ymaps.GeoObjectCollection()
         // let key
         // let myGeoObjects = []
 
-        // for (key in industrial_global) {
-        //     let entry = industrial_global[key]
-        // }
+        for (key in industrial_global) {
+            // let entry = industrial_global[key]
+        }
 
-        // if (typeof isAdminOrEditor != 'undefined' && isAdminOrEditor) {
-        //     window.active_polygon = false
-        //     let editingZones = false
-        //     let colorPolygon = $('.color_polygon')
-        //     let fillopacityPolygon = $('.fillopacity_polygon')
-        //     let industrialNameSelect = $('#industrial_name')
-        //     let button = new ymaps.control.Button({
-        //         data: { content: 'Редактировать зоны' },
-        //         options: {
-        //             maxWidth: 350,
-        //             position: { bottom: 100, right: 10 }
-        //         }
-        //     })
-        //     let buttonRemover = new ymaps.control.Button({
-        //         data: { content: 'Создать ластик' },
-        //         options: {
-        //             maxWidth: 350,
-        //             position: { bottom: 100, right: 170 }
-        //         }
-        //     })
+        if (typeof isAdminOrEditor != 'undefined' && isAdminOrEditor) {
+            // window.active_polygon = false
+            // let editingZones = false
+            // let colorPolygon = $('.color_polygon')
+            // let fillopacityPolygon = $('.fillopacity_polygon')
+            // let industrialNameSelect = $('#industrial_name')
+            // let button = new ymaps.control.Button({
+            //     data: { content: 'Редактировать зоны' },
+            //     options: {
+            //         maxWidth: 350,
+            //         position: { bottom: 100, right: 10 }
+            //     }
+            // })
+            // let buttonRemover = new ymaps.control.Button({
+            //     data: { content: 'Создать ластик' },
+            //     options: {
+            //         maxWidth: 350,
+            //         position: { bottom: 100, right: 170 }
+            //     }
+            // })
 
-        //     map.controls.add(button)
-        //     map.controls.add(buttonRemover)
+            // map.controls.add(button)
+            // map.controls.add(buttonRemover)
 
-        //     let zoneFilterBtn = $('.left-filter-item[data-filter="zones"]')
-        //         .closest('.filter_data')
-        //         .find('.filter-trigger')
-        //     zoneFilterBtn.click(function () { zonesModel.update(setLVRV) })
+            // let zoneFilterBtn = $('.left-filter-item[data-filter="zones"]')
+            //     .closest('.filter_data')
+            //     .find('.filter-trigger')
+            // zoneFilterBtn.click(function () { zonesModel.update(setLVRV) })
 
-        //     colorPolygon.colorpicker()
+            // colorPolygon.colorpicker()
 
-        //     let selectorIndustrials = industrialNameSelect.selectize({
-        //         closeAfterSelect: true
-        //     })
+            // let selectorIndustrials = industrialNameSelect.selectize({
+            //     closeAfterSelect: true
+            // })
 
-        //     if (typeof selectorIndustrials[0] != 'undefined') {
-        //         selectorIndustrials = selectorIndustrials[0].selectize
-        //     }
+            // if (typeof selectorIndustrials[0] != 'undefined') {
+            //     selectorIndustrials = selectorIndustrials[0].selectize
+            // }
 
-        //     colorPolygon.on('colorpickerChange', function (event) {
-        //         if (window.active_polygon) {
-        //             window.active_polygon.options.set("fillColor", event.color.toString())
-        //             window.active_polygon.options.set("strokeColor", event.color.toString())
-        //         }
-        //     })
+            // colorPolygon.on('colorpickerChange', function (event) {
+            //     if (window.active_polygon) {
+            //         window.active_polygon.options.set("fillColor", event.color.toString())
+            //         window.active_polygon.options.set("strokeColor", event.color.toString())
+            //     }
+            // })
 
-        //     fillopacityPolygon.blur(function () {
-        //         if (window.active_polygon) {
-        //             window.active_polygon.options.set("fillOpacity", $(this).val())
-        //         }
-        //     })
+            // fillopacityPolygon.blur(function () {
+            //     if (window.active_polygon) {
+            //         window.active_polygon.options.set("fillOpacity", $(this).val())
+            //     }
+            // })
 
-        //     $('#addPolygon').click(function () {
-        //         let color_polygon = $('#formpolygon .color_polygon').val()
-        //         let fillopacity_polygon = $('#formpolygon .fillopacity_polygon').val()
-        //         let industrial_name = $('#industrial_name option:selected').text()
-        //         let industrial_id = $('#industrial_name option:selected').val()
+            // $('#addPolygon').click(function () {
+            //     let color_polygon = $('#formpolygon .color_polygon').val()
+            //     let fillopacity_polygon = $('#formpolygon .fillopacity_polygon').val()
+            //     let industrial_name = $('#industrial_name option:selected').text()
+            //     let industrial_id = $('#industrial_name option:selected').val()
 
-        //         let polygon = new ymaps.Polygon([[]], {
-        //             hintContent: industrial_name,
-        //             balloonContent: industrial_name
-        //         }, {
-        //             fillColor: color_polygon,
-        //             strokeColor: color_polygon,
-        //             fillOpacity: fillopacity_polygon,
-        //             strokeOpacity: 0.6,
-        //             strokeWidth: 3
-        //         })
+            //     let polygon = new ymaps.Polygon([[]], {
+            //         hintContent: industrial_name,
+            //         balloonContent: industrial_name
+            //     }, {
+            //         fillColor: color_polygon,
+            //         strokeColor: color_polygon,
+            //         fillOpacity: fillopacity_polygon,
+            //         strokeOpacity: 0.6,
+            //         strokeWidth: 3
+            //     })
 
-        //         polygon.properties.set("myID", industrial_id)
-        //         map.geoObjects.add(polygon)
-        //         selectorIndustrials.removeOption(industrial_id)
-        //         window.active_polygon = polygon
-        //         industrialsOnMap.add(polygon)
-        //         polygon.editor.startDrawing()
-        //         editPolygon(polygon, true)
-        //     })
+            //     polygon.properties.set("myID", industrial_id)
+            //     map.geoObjects.add(polygon)
+            //     selectorIndustrials.removeOption(industrial_id)
+            //     window.active_polygon = polygon
+            //     industrialsOnMap.add(polygon)
+            //     polygon.editor.startDrawing()
+            //     editPolygon(polygon, true)
+            // })
 
-        //     $('#removePolygon').click(function () {
-        //         $.ajax({
-        //             type: 'POST',
-        //             url: '/ajax/industrials/save-coords',
-        //             data: {
-        //                 industrialId: window.active_polygon.properties.get("myID"),
-        //                 coordinates: 'null'
-        //             },
-        //             success: function (response) {
-        //                 industrialsOnMap.remove(window.active_polygon)
-        //                 map.geoObjects.remove(window.active_polygon)
-        //                 $('#formpolygonedit').addClass('d-none')
-        //                 window.active_polygon = false
-        //             }
-        //         })
-        //     })
+            // $('#removePolygon').click(function () {
+            //     $.ajax({
+            //         type: 'POST',
+            //         url: '/ajax/industrials/save-coords',
+            //         data: {
+            //             industrialId: window.active_polygon.properties.get("myID"),
+            //             coordinates: 'null'
+            //         },
+            //         success: function (response) {
+            //             industrialsOnMap.remove(window.active_polygon)
+            //             map.geoObjects.remove(window.active_polygon)
+            //             $('#formpolygonedit').addClass('d-none')
+            //             window.active_polygon = false
+            //         }
+            //     })
+            // })
 
-        //     button.events.add('click', function (e) {
-        //         $('#formpolygon').toggleClass('d-none')
+            // button.events.add('click', function (e) {
+            //     $('#formpolygon').toggleClass('d-none')
 
-        //         if (!$('#formpolygonedit').hasClass('d-none')) {
-        //             $('#formpolygonedit').addClass('d-none')
-        //         }
-        //         window.active_polygon = false
+            //     if (!$('#formpolygonedit').hasClass('d-none')) {
+            //         $('#formpolygonedit').addClass('d-none')
+            //     }
+            //     window.active_polygon = false
 
-        //         if (!button.isSelected()) {
-        //             map.geoObjects.removeAll()
-        //             map.geoObjects.add(industrialsOnMap)
-        //         } else {
-        //             map.geoObjects.removeAll()
-        //             map.geoObjects.add(objectManager)
-        //         }
-        //     })
+            //     if (!button.isSelected()) {
+            //         map.geoObjects.removeAll()
+            //         map.geoObjects.add(industrialsOnMap)
+            //     } else {
+            //         map.geoObjects.removeAll()
+            //         map.geoObjects.add(objectManager)
+            //     }
+            // })
 
-        //     let circle = null
+            // let circle = null
 
-        //     buttonRemover.events.add('click', function (e) {
-        //         if (buttonRemover.isSelected() && circle) {
-        //             map.geoObjects.remove(circle)
-        //             circle = null
-        //             return
-        //         } else if (buttonRemover.isSelected()) {
-        //             circle = null
-        //             return
-        //         }
+            // buttonRemover.events.add('click', function (e) {
+            //     if (buttonRemover.isSelected() && circle) {
+            //         map.geoObjects.remove(circle)
+            //         circle = null
+            //         return
+            //     } else if (buttonRemover.isSelected()) {
+            //         circle = null
+            //         return
+            //     }
 
-        //         if (!window.active_polygon || !button.isSelected()) {
-        //             circle = null
-        //             return
-        //         }
+            //     if (!window.active_polygon || !button.isSelected()) {
+            //         circle = null
+            //         return
+            //     }
 
-        //         circle = new ymaps.Circle([[]], null, {
-        //             draggable: true,
-        //             fillColor: '#ff0000',
-        //             strokeColor: '#ff0000',
-        //             strokeOpacity: 0.9,
-        //             strokeWidth: 3
-        //         })
+            //     circle = new ymaps.Circle([[]], null, {
+            //         draggable: true,
+            //         fillColor: '#ff0000',
+            //         strokeColor: '#ff0000',
+            //         strokeOpacity: 0.9,
+            //         strokeWidth: 3
+            //     })
 
-        //         map.geoObjects.add(circle)
-        //         circle.editor.startDrawing()
+            //     map.geoObjects.add(circle)
+            //     circle.editor.startDrawing()
 
-        //         let obj = window.active_polygon
-        //         let result = obj.geometry.getCoordinates()
-        //         let stateMonitor = new ymaps.Monitor(circle.editor.state)
+            //     let obj = window.active_polygon
+            //     let result = obj.geometry.getCoordinates()
+            //     let stateMonitor = new ymaps.Monitor(circle.editor.state)
 
-        //         stateMonitor.add("drawing", function (newValue) {
-        //             circle.editor.stopEditing()
-        //         })
+            //     stateMonitor.add("drawing", function (newValue) {
+            //         circle.editor.stopEditing()
+            //     })
 
-        //         circle.events.add('drag', function (e) {
-        //             if (!obj.geometry.getLength()) return
-        //             let closest = obj.geometry.getClosest(circle.geometry.getCoordinates())
+            //     circle.events.add('drag', function (e) {
+            //         if (!obj.geometry.getLength()) return
+            //         let closest = obj.geometry.getClosest(circle.geometry.getCoordinates())
 
-        //             if (!closest) return
+            //         if (!closest) return
 
-        //             if (closest.distance <= circle.geometry.getRadius()) {
-        //                 result[closest.pathIndex].splice(closest.closestPointIndex, 1)
-        //                 obj.geometry.setCoordinates(result)
-        //             }
-        //         })
-        //     })
-        // }
+            //         if (closest.distance <= circle.geometry.getRadius()) {
+            //             result[closest.pathIndex].splice(closest.closestPointIndex, 1)
+            //             obj.geometry.setCoordinates(result)
+            //         }
+            //     })
+            // })
+        }
 
         map.geoObjects.add(objectManager)
 
@@ -1250,64 +1250,64 @@ $(document).ready(function () {
         //     currentZoom = map.getZoom()
         // })
 
-        // objectManager.clusters.events.add(['mouseenter', 'mouseleave'], function (e) {
-        //     var target = e.get('target'),
-        //         type = e.get('type')
-        //     if (type == 'mouseenter') {
-        //         if (e.get('objectId') == clickedObjectId) return
-        //         let cl = objectManager.clusters.getById(e.get('objectId'))
+        objectManager.clusters.events.add(['mouseenter', 'mouseleave'], function (e) {
+            var type = e.get('type')
+            if (type == 'mouseenter') {
+                if (e.get('objectId') == clickedObjectId) return
+                let cl = objectManager.clusters.getById(e.get('objectId'))
 
-        //         if (cl) objectManager.clusters.setClusterOptions(cl.id, {
-        //             clusterIcons: [{
-        //                 href: cl.options.clusterIcons[0].href,
-        //                 size: clusterIconSizeBig,
-        //                 offset: clusterIconOffsetBig
-        //             }],
-        //             clusterIconContentLayout: MyClusterIconContentLayoutHover
-        //         })
-        //     } else {
-        //         if (e.get('objectId') == clickedObjectId) return
-        //         let cl = objectManager.clusters.getById(e.get('objectId'))
+                if (cl) objectManager.clusters.setClusterOptions(cl.id, {
+                    clusterIcons: [{
+                        href: cl.options.clusterIcons[0].href,
+                        size: clusterIconSizeBig,
+                        offset: clusterIconOffsetBig
+                    }],
+                    clusterIconContentLayout: MyClusterIconContentLayoutHover
+                })
+            } else {
+                if (e.get('objectId') == clickedObjectId) return
+                let cl = objectManager.clusters.getById(e.get('objectId'))
 
-        //         if (cl) objectManager.clusters.setClusterOptions(cl.id, {
-        //             clusterIcons: [{
-        //                 href: cl.options.clusterIcons[0].href,
-        //                 size: projectIconSize,
-        //                 offset: projectIconOffset
-        //             }],
-        //             clusterIconContentLayout: MyClusterIconContentLayout
-        //         })
-        //     }
-        // })
+                if (cl) objectManager.clusters.setClusterOptions(cl.id, {
+                    clusterIcons: [{
+                        href: cl.options.clusterIcons[0].href,
+                        size: projectIconSize,
+                        offset: projectIconOffset
+                    }],
+                    clusterIconContentLayout: MyClusterIconContentLayout
+                })
+            }
+        })
 
-        // objectManager.objects.events.add(['mouseenter', 'mouseleave'], function (e) {
-        //     var type = e.get('type')
+        objectManager.objects.events.add(['mouseenter', 'mouseleave'], function (e) {
+            var type = e.get('type')
 
-        //     if (type == 'mouseenter') {
-        //         if (e.get('objectId') == clickedObjectId) {
-        //             return
-        //         }
-        //         objectManager.objects.setObjectOptions(e.get('objectId'), {
-        //             iconImageSize: projectIconSizeBig,
-        //             iconImageOffset: projectIconOffsetBig
-        //         })
-        //     } else {
-        //         if (e.get('objectId') == clickedObjectId) {
-        //             return
-        //         }
-        //         objectManager.objects.setObjectOptions(e.get('objectId'), {
-        //             iconImageSize: projectIconSize,
-        //             iconImageOffset: projectIconOffset
-        //         })
-        //     }
-        // })
+            if (type == 'mouseenter') {
+                if (e.get('objectId') == clickedObjectId) {
+                    return
+                }
+                objectManager.objects.setObjectOptions(e.get('objectId'), {
+                    iconImageSize: projectIconSizeBig,
+                    iconImageOffset: projectIconOffsetBig
+                })
+            } else {
+                if (e.get('objectId') == clickedObjectId) {
+                    return
+                }
+                objectManager.objects.setObjectOptions(e.get('objectId'), {
+                    iconImageSize: projectIconSize,
+                    iconImageOffset: projectIconOffset
+                })
+            }
+        })
 
-        // objectManager.objects.events.add(['add'], onObjectCollectionAdd)
-        // objectManager.clusters.events.add('add', onAddCluster)
+        objectManager.objects.events.add(['add'], onObjectCollectionAdd)
+        objectManager.clusters.events.add('add', onAddCluster)
+        
+        objectManager.objects.events.add(['click'], onObjectClick)
+        objectManager.clusters.events.add('click', onClusterClick)
 
         // map.events.add('click', hideFilters)
-        // objectManager.clusters.events.add('click', onClusterClick)
-        // objectManager.objects.events.add(['click'], onObjectClick)
 
         // $.ajax({
         //     url: '/ymap/load?callback=?',
@@ -2447,4 +2447,4 @@ function toggleFullScreen() {
     $('header').toggle()
     $('.legend_cnt__list').toggle()
     $('.map-controls__wrapper').toggleClass('map-controls__wrapper--off-option-unhidden')
-}}
+}

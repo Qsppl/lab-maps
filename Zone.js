@@ -1,19 +1,3 @@
-/**
- * @typedef {object} FeatureCollection
- * @property {"FeatureCollection"} FeatureCollection.type
- * @property {Feature[]} FeatureCollection.features
- * 
- * @typedef {object} Feature
- * @property {number} Feature.id
- * @property {"Feature"} Feature.type
- * @property {ymaps.IGeometry|ymaps.IGeometryJson} Feature.geometry
- * @property {object} Feature.options
- * @property {ymaps.IClassConstructor<ymaps.layout.templateBased.Base>} Feature.options.iconLayout
- * @property {{ type: string, coordinates: number[][] }} Feature.options.iconShape
- * @property {number[]} Feature.options.iconContentOffset
- * @property {ymaps.IDataManager|object} Feature.properties
- */
-
 class Zone {
     /** @type {null | ymaps.ObjectManager} */
     objectManager = null
