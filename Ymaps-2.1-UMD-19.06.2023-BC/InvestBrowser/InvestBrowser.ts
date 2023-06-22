@@ -38,19 +38,20 @@ class InvestBrowser {
     }
 
     private showProjects() {
-        const pointsLoader = this.createClusteredMapPointsLoader(InvestBrowser.requests["project-points-for-the-map"])
+        const pointsLoader = new 
+        pointsLoader
         const decoratedPointsLoader = this._browserUI.decoratePointsLoader(pointsLoader).asProjects()
         this._browserUI.addPointsLoaderToMap(decoratedPointsLoader)
     }
 
-    private createMapPointsLoader(requesUrl: string, options?: ymaps.objectManager.LoadingObjectManagerOptions) {
-        return new ymaps.objectManager.LoadingObjectManager(requesUrl, options)
+    /** @deprecated */
+    private static isProjectInAnyFolder(projectData: ProjectsData): boolean {
+        for (const folder of _folders) if (folder.projects.includes(projectData.id)) return true
+        return false
     }
 
-    private createClusteredMapPointsLoader(requesUrl: string, options?: ymaps.objectManager.LoadingObjectManagerOptions) {
-        options = options || {}
-        options.clusterize = true
-        options.gridSize = options.gridSize || 36
-        return this.createMapPointsLoader(requesUrl, options)
+    /** @deprecated */
+    private static isProjectForeign(projectData: ProjectsData): boolean {
+        return projectData.o === 89
     }
 }
