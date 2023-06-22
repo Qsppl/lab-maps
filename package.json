@@ -1,10 +1,12 @@
 {
   "name": "lab-maps",
+  "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "tsc --module umd ./Ymaps-2.1-UMD-19.06.2023-BC/InvestBrowser/InvestBrowser.ts"
   },
   "author": "",
   "license": "ISC",
