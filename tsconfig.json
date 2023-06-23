@@ -5,7 +5,7 @@
     "esModuleInterop": false,
     "rootDir": "./InvestBrowserApp",
     "outDir": "./out/InvestBrowserApp",
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "Node16"
   },
   "exclude": [
     "node_modules",

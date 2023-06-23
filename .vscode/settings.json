@@ -4,5 +4,8 @@
     "explorer.copyRelativePathSeparator": "/",
     "javascript.preferences.importModuleSpecifierEnding": "js",
     "typescript.preferences.importModuleSpecifierEnding": "js",
-    "files.autoSave": "onFocusChange"
+    "files.autoSave": "onFocusChange",
+    "terminal.integrated.automationProfile.windows": {
+        "path": "C:\\Windows\\System32\\cmd.exe"
+    }
 }
