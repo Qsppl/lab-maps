@@ -1,5 +1,5 @@
 /** @deprecated */
-export interface ProjectData extends ProjectsDataDTO {
+export interface ProjectData {
     properties: {
         /** какая-то фигня (равно Id проекта) */
         clusterCaption: number

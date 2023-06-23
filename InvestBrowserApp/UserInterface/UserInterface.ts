@@ -1,6 +1,10 @@
+import { IUserInterface } from "../Browser/interfaces/IUserInterface.js"
+import { IContainer } from "./IContainer.js"
+import { ModalRestrictionNotice } from "./ModalRestrictionNotice.js"
+
 /** Класс реализующий работу пользовательского интерфейса управления браузером проектов Investproject */
-export class UserInterface implements IInvestBrowserUI {
-    private static localizationAssets = {
+export class UserInterface implements IUserInterface {
+    private readonly localizationAssets = {
         ru: {
             'zoom-in-limit': 'Увеличение ограничено из-за окончания лимитов работы с картой',
             'zoom-out-limit': 'Максимальное отдаление карты',
@@ -15,17 +19,17 @@ export class UserInterface implements IInvestBrowserUI {
         }
     }
 
-    private readonly _map: IInvestBrowserUIMap
+    private readonly _map: IContainer
     private _localizationAsset
     /** Модальное окно уведомляющее пользователя о том что у него есть какое-либо ограничение использования приложения */
     private _modalRestrictionNotice: Promise<ModalRestrictionNotice>
 
-    constructor(map: IInvestBrowserUIMap, languageLocale: string) {
-        this._localizationAsset = InvestBrowserUI.localizationAssets[languageLocale]
+    constructor(map: IContainer, languageLocale: string) {
+        this._localizationAsset = this.localizationAssets[languageLocale]
 
         this._map = map
 
-        InvestBrowserUI.doSomething1()
+        this.doSomething1()
 
         this._modalRestrictionNotice = app.querySelectorPromise('#no-access').then((element: HTMLElement | null) => {
             if (!element) throw new Error('Could not find element by id="no-access"')
@@ -71,15 +75,15 @@ export class UserInterface implements IInvestBrowserUI {
         //     }
     }
 
-    decoratePointsLoader(pointsLoader: ymaps.objectManager.LoadingObjectManager<ymaps.IGeometry>) {
-        return new InvestBrowserUIPointsDecorator(pointsLoader)
-    }
+    // decoratePointsLoader(pointsLoader: ymaps.objectManager.LoadingObjectManager<ymaps.IGeometry>) {
+    //     return new InvestBrowserUIPointsDecorator(pointsLoader)
+    // }
 
     addPointsLoaderToMap(pointsLoader: ymaps.objectManager.LoadingObjectManager<ymaps.IGeometry>): void {
         this._map.addPointsLoader(pointsLoader)
     }
 
-    static doSomething1() {
+    private doSomething1() {
         document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.add('specModalBlackout', 'maps-page')
         })

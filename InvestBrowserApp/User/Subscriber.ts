@@ -1,5 +1,5 @@
-import { IUser } from "../Browser/interfaces/IUser"
-import { BaseUser } from "./BaseUser"
+import { IUser } from "../Browser/interfaces/IUser.js"
+import { BaseUser } from "./BaseUser.js"
 
 export class Subscriber extends BaseUser implements IUser {
     /** Пользователь не зарегистрирован */

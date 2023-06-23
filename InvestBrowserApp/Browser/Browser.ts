@@ -1,3 +1,8 @@
+import { IMap } from "./interfaces/IMap.js"
+import { IUser } from "./interfaces/IUser.js"
+import { IUserInterface } from "./interfaces/IUserInterface.js"
+import { ProjectData } from "../MapPoint/ProjectsLoader/dto/ProjectData.js"
+
 /**
  * `Браузер Данных` Сайта Investprojects. Взаимодействует с `Пользовательским Интерфейсом` и `Картой`
  * - Реализует логику получения различных данных Сайта Investprojects.
@@ -18,19 +23,19 @@ export class Browser {
     /** ограничение просмотров проектов для незарегистрированных пользователей */
     private readonly limitOfProjectViews = 10;
 
-    private _map: IInvestBrowserMap
-    private _browserUI: IInvestBrowserUI
-    private _user: IInvestBrowserUser
+    private _map: IMap
+    private _userInterface: IUserInterface
+    private _user: IUser
 
-    constructor(map: IInvestBrowserMap, browserUI: IInvestBrowserUI, user: IInvestBrowserUser) {
+    constructor(map: IMap, userInterface: IUserInterface, user: IUser) {
         this._map = map
-        this._browserUI = browserUI
+        this._userInterface = userInterface
         this._user = user
 
         if (user.isGuest || user.isRegistrant) {
-            browserUI.doSomething2();
+            userInterface.doSomething2();
             if (user.isSpentDailyLimit || (user.numberOfViewedProjects >= this.limitOfProjectViews)) {
-                browserUI.limitMapZoom()
+                userInterface.limitMapZoom()
             }
         }
 
@@ -40,8 +45,8 @@ export class Browser {
     private showProjects() {
         // const pointsLoader = new 
         // pointsLoader
-        // const decoratedPointsLoader = this._browserUI.decoratePointsLoader(pointsLoader).asProjects()
-        // this._browserUI.addPointsLoaderToMap(decoratedPointsLoader)
+        // const decoratedPointsLoader = this._userInterface.decoratePointsLoader(pointsLoader).asProjects()
+        // this._userInterface.addPointsLoaderToMap(decoratedPointsLoader)
     }
 
     /** @deprecated */
@@ -51,7 +56,7 @@ export class Browser {
     // }
 
     /** @deprecated */
-    private static isProjectForeign(projectData: ProjectsData): boolean {
+    private static isProjectForeign(projectData: ProjectData): boolean {
         return projectData.o === 89
     }
 }

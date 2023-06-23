@@ -1,4 +1,4 @@
-var appLoadScreen = (function AppLoader(){
+globalThis.appLoadScreen = (function AppLoader(){
     var ret = {},
         loader = false
     let loader_all

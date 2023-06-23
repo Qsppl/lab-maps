@@ -1,5 +1,11 @@
+import { IMap } from "../Browser/interfaces/IMap.js"
+import { IContainer } from "../UserInterface/IContainer.js"
+
+const ymaps = globalThis.ymaps
+const app = globalThis.app
+
 /** Класс инкапсулирующий логику управления картой. */
-export class YandexMapAdapter implements IInvestBrowserMap, IInvestBrowserUIMap {
+export class YandexMapAdapter implements IMap, IContainer {
     private static center = [59.92, 30.3413]
 
     static zoomConfigs: { [k in 'default' | 'restricted' | 'region']: { minZoom: number, middleZoom: number, maxZoom: number } } = {
@@ -13,33 +19,29 @@ export class YandexMapAdapter implements IInvestBrowserMap, IInvestBrowserUIMap 
 
     _yandexMap: Promise<ymaps.Map>
 
-    _localizationAsset
-
     constructor(containerElement: HTMLElement | string) {
-        this._localizationAsset = YandexMapAdapter.localizationAssets['']
-
-        this._yandexMap = findElementAfterDocumentLoad(containerElement)
+        this._yandexMap = app.querySelectorPromise(containerElement)
             .then(element => { return YandexMapAdapter._createMapInstance(element, { controls: YandexMapAdapter.controls }) })
 
-        this._yandexMap.then(map => map.events.add("wheel", this._handleZoomOutRange.bind(this)))
+        // this._yandexMap.then(map => map.events.add("wheel", this._handleZoomOutRange.bind(this)))
 
-        // Finish card configuration after initialization:
+        // // Finish card configuration after initialization:
 
-        const zoomConfig = isZoomRestricted ? YandexMapAdapter.zoomConfigs.restricted : YandexMapAdapter.zoomConfigs.default
+        // const zoomConfig = YandexMapAdapter.zoomConfigs.default
 
-        // 1. Set map state after initaliazation
-        this.moveTo(YandexMapAdapter.center, zoomConfig.middleZoom)
+        // // 1. Set map state after initaliazation
+        // this.moveTo(YandexMapAdapter.center, zoomConfig.middleZoom)
 
-        // 2. Set map options after initaliazation
-        const { minZoom, maxZoom } = zoomConfig
-        this.setZoomRange({
-            zoomIn: { limit: maxZoom, warningMessage: this._localizationAsset["zoom-in-is-limited"] },
-            zoomOut: { limit: minZoom, warningMessage: this._localizationAsset["zoom-out-is-limited"] }
-        })
-        this._yandexMap.then(yandexMap => {
-            // Будет производиться поиск по топонимам и организациям.
-            yandexMap.controls.add(new ymaps.control.SearchControl(YandexMapAdapter.searchControlParameters))
-        })
+        // // 2. Set map options after initaliazation
+        // // const { minZoom, maxZoom } = zoomConfig
+        // // this.setZoomRange({
+        // //     zoomIn: { limit: maxZoom, warningMessage: this._localizationAsset["zoom-in-is-limited"] },
+        // //     zoomOut: { limit: minZoom, warningMessage: this._localizationAsset["zoom-out-is-limited"] }
+        // // })
+        // this._yandexMap.then(yandexMap => {
+        //     // Будет производиться поиск по топонимам и организациям.
+        //     yandexMap.controls.add(new ymaps.control.SearchControl(YandexMapAdapter.searchControlParameters))
+        // })
     }
 
     async moveTo([x, y]: number[], zoom: number): Promise<any> {
@@ -99,8 +101,8 @@ export class YandexMapAdapter implements IInvestBrowserMap, IInvestBrowserUIMap 
     }
 
     /** Обертка для типизации и асинхронности. */
-    static async _createMapInstance(containerElement: HTMLElement, state: IMapState): Promise<ymaps.Map> {
+    static async _createMapInstance(containerElement: HTMLElement, state: ymaps.IMapState): Promise<ymaps.Map> {
         await ymaps.ready()
-        return new ymaps.Map(containerElement, state)
+        return new ymaps.Map(containerElement, { center: [55.76, 37.64], zoom: 7 })
     }
 }

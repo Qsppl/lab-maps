@@ -1,12 +1,12 @@
-const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+globalThis.ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
 
-const testIsMobile = function () {
+globalThis.testIsMobile = function () {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|BB|PlayBook|IEMobile|Windows Phone|Kindle|Silk|Opera Mini/i.test(navigator.userAgent) || screen.width <= 480
 }
 
-const mobile = testIsMobile()
+globalThis.mobile = testIsMobile()
 
-const app = {
+globalThis.app = {
     languageLocale: $('html').attr('lang'),
 
     scroll_speed: 200,

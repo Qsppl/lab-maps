@@ -1,9 +1,9 @@
-import { Browser } from "./Browser/Browser"
-import { YandexMapAdapter } from "./Map/YandexMapAdapter"
-import { Guest } from "./User/Guest"
-import { Registrant } from "./User/Registrant"
-import { Subscriber } from "./User/Subscriber"
-import { UserInterface } from "./UserInterface/UserInterface"
+import { Browser } from "./Browser/Browser.js"
+import { YandexMapAdapter } from "./Map/YandexMapAdapter.js"
+import { Guest } from "./User/Guest.js"
+import { Registrant } from "./User/Registrant.js"
+import { Subscriber } from "./User/Subscriber.js"
+import { UserInterface } from "./UserInterface/UserInterface.js"
 
 const mapAdapter = new YandexMapAdapter('#map')
 

@@ -1,5 +1,5 @@
-import { IUser } from "../Browser/interfaces/IUser"
-import { FreeRestrictedUser } from "./FreeRestrictedUser/FreeRestrictedUser"
+import { IUser } from "../Browser/interfaces/IUser.js"
+import { FreeRestrictedUser } from "./FreeRestrictedUser/FreeRestrictedUser.js"
 
 export class Guest extends FreeRestrictedUser implements IUser {
     /** Пользователь не зарегистрирован */

@@ -1,4 +1,6 @@
-export class ClusteredLoader<FeathureType extends ymaps.IFeatureData> extends InvestBrowserMapPointsLoader<FeathureType> {
+import { Loader } from "./Loader.js"
+
+export class ClusteredLoader<FeathureType extends ymaps.IFeatureData> extends Loader<FeathureType> {
     protected iconUrlOfCluster = "/web/img/map/icons/svg/few_normal.svg"
     protected iconUrlOfVisetedCluster = "/web/img/map/icons/svg/few_visited.svg"
 

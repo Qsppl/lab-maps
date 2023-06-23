@@ -1,4 +1,4 @@
-import { IAgent } from "./IAgent"
+import { IAgent } from "./IAgent.js"
 
 export type FingerprintJSModule = {
     load({ delayFallback, debug, monitoring }: {
