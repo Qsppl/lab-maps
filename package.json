@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "tsc"
+    "compile": "tsc",
+    "server": "nodemon"
   },
   "author": "",
   "license": "ISC",
@@ -18,5 +19,9 @@
     "@types/yandex-maps": "^2.1.29",
     "bootstrap": "^4.6.2",
     "jquery": "^3.6.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "ts-node": "^10.9.1"
   }
 }

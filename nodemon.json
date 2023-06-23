@@ -1,0 +1,4 @@
+{
+    "watch": ["InvestBrowserApp/**/*.ts"],
+    "exec": "tsc"
+  }
