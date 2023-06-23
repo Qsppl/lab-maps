@@ -1,14 +1,16 @@
 {
-    "compilerOptions": {
-        "target": "ES2020",
-        "module": "ES2020",
-        "esModuleInterop": false,
-        "rootDir": "./InvestBrowserApp",
-        "outDir": "./out/InvestBrowserApp"
-    },
-    "exclude": [
-      "node_modules",
-      "original-code",
-      "tests"
-    ]
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "esModuleInterop": false,
+    "rootDir": "./InvestBrowserApp",
+    "outDir": "./out/InvestBrowserApp",
+    "moduleResolution": "NodeNext"
+  },
+  "exclude": [
+    "node_modules",
+    "original-code",
+    "tests",
+    "InvestBrowserApp/MapPoint",
+  ],
 }

@@ -1,3 +1,4 @@
+import * as ymaps from "yandex-maps"
 import { ClusteredLoader } from "../ClusteredLoader.js"
 import { IconUrlCreator } from "./IconUrlCreator.js"
 import { ProjectData } from "./dto/ProjectData.js"

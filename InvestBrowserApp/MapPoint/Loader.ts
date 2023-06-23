@@ -1,3 +1,5 @@
+import * as ymaps from "yandex-maps"
+
 export class Loader<FeathureType extends ymaps.IFeatureData> {
     protected readonly iconUrlOfPointer = "/web/img/map/icons/svg/few_normal.svg"
     protected readonly iconUrlOfActivePointer = "/web/img/map/icons/svg/few_active.svg"
@@ -41,7 +43,7 @@ export class Loader<FeathureType extends ymaps.IFeatureData> {
         const targetObjectId = event.get("objectId")
         if (targetObjectId == clickedObjectId) return
 
-        objectManager.objects.setObjectOptions(targetObjectId, {
+        this._loadingObjectManager.objects.setObjectOptions(targetObjectId, {
             iconImageSize: projectIconSizeBig,
             iconImageOffset: projectIconOffsetBig
         })
@@ -53,7 +55,7 @@ export class Loader<FeathureType extends ymaps.IFeatureData> {
 
         if (targetObjectId == +clickedObjectId) return
 
-        objectManager.objects.setObjectOptions(targetObjectId, {
+        this._loadingObjectManager.objects.setObjectOptions(targetObjectId, {
             iconImageSize: projectIconSize,
             iconImageOffset: projectIconOffset
         })

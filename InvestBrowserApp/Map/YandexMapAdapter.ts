@@ -4,7 +4,6 @@ import { IMap as IUserInterfaceMap } from "../UserInterface/interfaces/IMap.js"
 import { IPlace as IUserInterfacePlace } from "../UserInterface/interfaces/IPlace.js"
 
 const ymaps = globalThis.ymaps
-const app = globalThis.app
 
 /** Класс инкапсулирующий логику управления картой. */
 export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUserInterfaceMap {
@@ -12,7 +11,7 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
     private readonly zoom = 7
     private readonly zoomRange = { minZoom: 4, maxZoom: 18 }
 
-    private readonly controls: (string | ymaps.control.ZoomControl | ymaps.control.RulerControl | ymaps.control.TypeSelector)[] = ['rulerControl']
+    private readonly controls: (ymaps.IControl | ymaps.ControlKey)[] = ['rulerControl']
     private readonly searchControlParameters: ymaps.control.ISearchControlParameters = { options: { provider: 'yandex#search' } }
 
     _yandexMap: Promise<ymaps.Map>
@@ -21,7 +20,11 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
         const { controls, center, zoom } = this
         const { minZoom, maxZoom } = this.zoomRange
         this._yandexMap = app.querySelectorPromise(containerElement).then(element => {
-            return this._createMapInstance(element, { controls, center, zoom }, { minZoom, maxZoom })
+            return this._createMapInstance(element, { controls: [], center, zoom }, { minZoom, maxZoom })
+        })
+        this._yandexMap.then(map => {
+            this.controls.map(control => map.controls.add(control))
+            map.controls.add(new ymaps.control.SearchControl(this.searchControlParameters))
         })
 
         this._yandexMap.then(map => map.events.add("wheel", this._callZoomBoundsingHandlers.bind(this)))

@@ -132,3 +132,5 @@ declare const g_subs_stages: any
 
 /** @type {number | undefined} Количество активных проектов investproject. */
 declare const totalProjects: number | undefined
+
+declare const app: any

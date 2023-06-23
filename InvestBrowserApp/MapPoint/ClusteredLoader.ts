@@ -1,3 +1,4 @@
+import * as ymaps from "yandex-maps"
 import { Loader } from "./Loader.js"
 
 export class ClusteredLoader<FeathureType extends ymaps.IFeatureData> extends Loader<FeathureType> {

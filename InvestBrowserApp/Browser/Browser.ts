@@ -1,7 +1,6 @@
 import { IMap } from "./interfaces/IMap.js"
 import { IUser } from "./interfaces/IUser.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"
-import { ProjectData } from "../MapPoint/ProjectsLoader/dto/ProjectData.js"
 
 /**
  * `Браузер Данных` Сайта Investprojects. Взаимодействует с `Пользовательским Интерфейсом` и `Картой`
@@ -15,9 +14,9 @@ import { ProjectData } from "../MapPoint/ProjectsLoader/dto/ProjectData.js"
  * - Реализует логику отображения данных на `Карте`
  */
 export class Browser {
-    private static requests = {
-        'project-points-for-the-map': '/ymap/load-projects?bounds=%b'
-    }
+    // private static requests = {
+    //     'project-points-for-the-map': '/ymap/load-projects?bounds=%b'
+    // }
     // private static _projectsDataEndpoint = ['POST', `${app.en_prefix}/ajax/ymaps/get-projects-data`]
 
     /** ограничение просмотров проектов для незарегистрированных пользователей */
@@ -33,6 +32,8 @@ export class Browser {
         this._user = user
 
         if (user.isGuest || user.isRegistrant) userInterface.doSomething2()
+
+        // Если пользователь потратил лимит просмотра проектов, ограничиваем ему зум. Логично.
         if (user.isSpentDailyLimit || (user.numberOfViewedProjects >= this.limitOfProjectViews)) {
             if (user.isGuest) userInterface.setZoomRestriction("for-guest")
             if (user.isRegistrant) userInterface.setZoomRestriction("for-registrant")
@@ -41,12 +42,12 @@ export class Browser {
         // this.showProjects()
     }
 
-    private showProjects() {
-        // const pointsLoader = new 
-        // pointsLoader
-        // const decoratedPointsLoader = this._userInterface.decoratePointsLoader(pointsLoader).asProjects()
-        // this._userInterface.addPointsLoaderToMap(decoratedPointsLoader)
-    }
+    // private showProjects() {
+    //     const pointsLoader = new 
+    //     pointsLoader
+    //     const decoratedPointsLoader = this._userInterface.decoratePointsLoader(pointsLoader).asProjects()
+    //     this._userInterface.addPointsLoaderToMap(decoratedPointsLoader)
+    // }
 
     /** @deprecated */
     // private static isProjectInAnyFolder(projectData: ProjectsData): boolean {
@@ -55,7 +56,7 @@ export class Browser {
     // }
 
     /** @deprecated */
-    private static isProjectForeign(projectData: ProjectData): boolean {
-        return projectData.o === 89
-    }
+    // private static isProjectForeign(projectData: ProjectData): boolean {
+    //     return projectData.o === 89
+    // }
 }

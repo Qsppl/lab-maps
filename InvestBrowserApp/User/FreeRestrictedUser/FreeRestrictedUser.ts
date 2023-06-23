@@ -3,9 +3,7 @@ import { FingerprintJSModule } from "./FingerprintJS/FingerprintJSModule.js"
 import { IAgent } from "./FingerprintJS/IAgent.js"
 import { ResultDto } from "./FingerprintJS/ResultDto.js"
 
-const app = globalThis.app
-
-var FingerprintJS: undefined | FingerprintJSModule
+var FingerprintJS: FingerprintJSModule | undefined
 
 export abstract class FreeRestrictedUser extends BaseUser {
     protected readonly fingerprintjsCDN = 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js'
