@@ -8,21 +8,21 @@ type ZoomRestrictionPresetData = { baseZoom?: number, zoomInLimit: number, zoomI
 /** Класс реализующий работу пользовательского интерфейса управления браузером проектов Investproject */
 export class UserInterface implements IUserInterface {
     private readonly restrictionPresets = new Map<ZoomRestrictionPresetKeys, ZoomRestrictionPresetData>([
-        ["for-guest", { baseZoom: 7, zoomInLimit: 10, zoomInMessageKey: "zoom-restriction-guest", zoomOutLimit: 4, zoomOutMessageKey: "zoom-restriction-guest" }],
-        ["for-registrant", { baseZoom: 7, zoomInLimit: 10, zoomInMessageKey: "zoom-restriction-registrant", zoomOutLimit: 4, zoomOutMessageKey: "zoom-restriction-registrant" }],
+        ["for-guest", { baseZoom: 7, zoomInLimit: 10, zoomInMessageKey: "zoom-restriction-guest", zoomOutLimit: 4, zoomOutMessageKey: "zoom-out-limit" }],
+        ["for-registrant", { baseZoom: 7, zoomInLimit: 10, zoomInMessageKey: "zoom-in-restriction-registrant", zoomOutLimit: 4, zoomOutMessageKey: "zoom-out-limit" }],
     ])
     private readonly localizationAssets = {
         ru: {
             'zoom-in-limit': 'Это максимальное приближение карты',
             'zoom-out-limit': 'Это максимальное отдаление карты',
-            'zoom-restriction-registrant': 'Для большего увеличения оформите подписку или получите демо-доступ',
             'zoom-restriction-guest': 'Масштабирование ограничено для незарегистрированных пользователей',
+            'zoom-in-restriction-registrant': 'Для большего увеличения карты оформите подписку или получите демо-доступ',
         },
         en: {
             'zoom-in-limit': 'This is the maximum zoom of the map',
             'zoom-out-limit': 'This is the maximum distance of the map',
-            'zoom-restriction-registrant': 'For a bigger zoom, subscribe or get demo access',
-            'zoom-restriction-guest': 'Zooming is limited for unregistered users',
+            'zoom-restriction-guest': 'Zoom is limited to unregistered users',
+            'zoom-in-restriction-registrant': 'For a larger map, subscribe or get demo access',
         }
     }
 
