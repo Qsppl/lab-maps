@@ -1,83 +1,78 @@
-import { IMap } from "../Browser/interfaces/IMap.js"
-import { IContainer } from "../UserInterface/IContainer.js"
+import { IMapOptions } from "yandex-maps"
+import { IMap as IBrowserMap } from "../Browser/interfaces/IMap.js"
+import { IMap as IUserInterfaceMap } from "../UserInterface/interfaces/IMap.js"
+import { IPlace as IUserInterfacePlace } from "../UserInterface/interfaces/IPlace.js"
 
 const ymaps = globalThis.ymaps
 const app = globalThis.app
 
 /** Класс инкапсулирующий логику управления картой. */
-export class YandexMapAdapter implements IMap, IContainer {
-    private static center = [59.92, 30.3413]
+export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUserInterfaceMap {
+    private readonly center: [number, number] = [59.92, 30.3413]
+    private readonly zoom = 7
+    private readonly zoomRange = { minZoom: 4, maxZoom: 18 }
 
-    static zoomConfigs: { [k in 'default' | 'restricted' | 'region']: { minZoom: number, middleZoom: number, maxZoom: number } } = {
-        default: { minZoom: 4, middleZoom: 7, maxZoom: 18 },
-        restricted: { minZoom: 4, middleZoom: 7, maxZoom: 10 },
-        region: { minZoom: 4, middleZoom: 6, maxZoom: 18 }
-    }
-
-    static controls: (string | ymaps.control.ZoomControl | ymaps.control.RulerControl | ymaps.control.TypeSelector)[] = ['rulerControl']
-    static searchControlParameters: ymaps.control.ISearchControlParameters = { options: { provider: 'yandex#search' } }
+    private readonly controls: (string | ymaps.control.ZoomControl | ymaps.control.RulerControl | ymaps.control.TypeSelector)[] = ['rulerControl']
+    private readonly searchControlParameters: ymaps.control.ISearchControlParameters = { options: { provider: 'yandex#search' } }
 
     _yandexMap: Promise<ymaps.Map>
 
     constructor(containerElement: HTMLElement | string) {
-        this._yandexMap = app.querySelectorPromise(containerElement)
-            .then(element => { return YandexMapAdapter._createMapInstance(element, { controls: YandexMapAdapter.controls }) })
+        const { controls, center, zoom } = this
+        const { minZoom, maxZoom } = this.zoomRange
+        this._yandexMap = app.querySelectorPromise(containerElement).then(element => {
+            return this._createMapInstance(element, { controls, center, zoom }, { minZoom, maxZoom })
+        })
 
-        // this._yandexMap.then(map => map.events.add("wheel", this._handleZoomOutRange.bind(this)))
-
-        // // Finish card configuration after initialization:
-
-        // const zoomConfig = YandexMapAdapter.zoomConfigs.default
-
-        // // 1. Set map state after initaliazation
-        // this.moveTo(YandexMapAdapter.center, zoomConfig.middleZoom)
-
-        // // 2. Set map options after initaliazation
-        // // const { minZoom, maxZoom } = zoomConfig
-        // // this.setZoomRange({
-        // //     zoomIn: { limit: maxZoom, warningMessage: this._localizationAsset["zoom-in-is-limited"] },
-        // //     zoomOut: { limit: minZoom, warningMessage: this._localizationAsset["zoom-out-is-limited"] }
-        // // })
-        // this._yandexMap.then(yandexMap => {
-        //     // Будет производиться поиск по топонимам и организациям.
-        //     yandexMap.controls.add(new ymaps.control.SearchControl(YandexMapAdapter.searchControlParameters))
-        // })
+        this._yandexMap.then(map => map.events.add("wheel", this._callZoomBoundsingHandlers.bind(this)))
     }
 
-    async moveTo([x, y]: number[], zoom: number): Promise<any> {
+    public async panTo([x, y]: number[], zoom?: number): Promise<void> {
         const map = await this._yandexMap
+
+        if (!zoom) return map.panTo([x, y])
+
+        throw new Error("Эта функция еще не реализована")
+
+        // promise.then(() => { map.events.fire('actionend') })
+    }
+
+    public async setCenter([x, y]: number[], zoom?: number): Promise<void> {
+        const map = await this._yandexMap
+
+        if (!zoom) return map.panTo([x, y])
+
         const [minZoom, maxZoom] = map.zoomRange.getCurrent()
+
         if (zoom >= maxZoom) zoom = maxZoom
         if (zoom <= minZoom) zoom = minZoom
-        const promise = map.setCenter(x, y, zoom)
-        promise.then(() => { map.events.fire('actionend') })
-        return promise
+
+        return map.setCenter([x, y], zoom, {
+            checkZoomRange: true
+        })
+        // promise.then(() => { map.events.fire('actionend') })
     }
 
-    async moveToAnotherCenter() {
-        console.table('fire actionend 1')
-        return this.moveTo(YandexMapAdapter.anotherCenter, 0)
-    }
-
-    async moveMapToRegion([x, y]) {
-        console.table('fire actionend 2')
-        return this.moveTo([x, y], YandexMapAdapter.zoomConfigs.region.middleZoom)
-    }
-
-    async setZoomRange({ zoomIn, zoomOut }: { zoomIn?: { limit?: number, warningMessage?: string }, zoomOut?: { limit?: number, warningMessage?: string } }) {
-        if (zoomIn && zoomIn.limit && zoomIn.warningMessage) this._localizationAsset['zoom-in-is-limited'] = zoomIn.warningMessage
-        if (zoomOut && zoomOut.limit && zoomOut.warningMessage) this._localizationAsset['zoom-out-is-limited'] = zoomOut.warningMessage
-
+    public async setZoom(zoom: number): Promise<void> {
         const map = await this._yandexMap
-        if (zoomIn && zoomIn.limit) map.options.set({ maxZoom: zoomIn.limit })
-        if (zoomOut && zoomOut.limit) map.options.set({ minZoom: zoomOut.limit })
+        map.setZoom(zoom, { checkZoomRange: true })
+    }
+
+    /**
+     * @param minZoom zoomOut limit
+     * @param maxZoom zoomIn limit
+     */
+    public async setZoomRange(minZoom: number, maxZoom: number): Promise<void> {
+        if (minZoom < 0 || maxZoom < minZoom) throw new Error();
+
+        (await this._yandexMap).options.set({ minZoom, maxZoom })
     }
 
     /** Обработчик выхода за пределы масштабирования карты. Сообщает пользователю о блокировке масштабирования, если она сработала. */
-    async _handleZoomOutRange(event: ymaps.IEvent<WheelEvent, {}>) {
+    private async _callZoomBoundsingHandlers(event: ymaps.IEvent<WheelEvent, {}>) {
         const wheelEvent = event.getSourceEvent()?.originalEvent?.domEvent?.originalEvent // я искринне ненавижу разработчиков яндекс-карт
         if (wheelEvent === undefined) {
-            console.warn("corrupted event in _handleZoomOutRange: ", event)
+            console.warn("corrupted event in _callZoomBoundsingHandlers: ", event)
             return
         }
 
@@ -88,21 +83,29 @@ export class YandexMapAdapter implements IMap, IContainer {
         /** Пользователь приблизил карту? */
         const isMapZoomedIn = wheelEvent.deltaY < 0 // В ymaps используется "масштаб приближения", значит если дельта скролла отрицательная, то пользователь приближает карту.
 
-        if (isMapZoomedIn && zoom >= maxZoom) {
-            app.showToast(this._localizationAsset['zoom-in-is-limited'], null, 'error', 'bottom-right')
-        }
+        if (isMapZoomedIn && zoom >= maxZoom && this._onZoomInBoundsing) this._onZoomInBoundsing()
 
         /** Пользователь отдалил карту? */
         const isMapZoomedOut = !isMapZoomedIn
 
-        if (isMapZoomedOut && zoom <= minZoom) {
-            app.showToast(this._localizationAsset['zoom-out-is-limited'], null, 'error', 'bottom-right')
-        }
+        if (isMapZoomedOut && zoom <= minZoom && this._onZoomOutBoundsing) this._onZoomOutBoundsing()
+    }
+
+    private _onZoomInBoundsing?: CallableFunction
+    set onZoomInBoundsing(callback: CallableFunction) {
+        if (this._onZoomInBoundsing) throw new Error("")
+        this._onZoomInBoundsing = callback
+    }
+
+    private _onZoomOutBoundsing?: CallableFunction
+    set onZoomOutBoundsing(callback: CallableFunction) {
+        if (this._onZoomOutBoundsing) throw new Error("")
+        this._onZoomOutBoundsing = callback
     }
 
     /** Обертка для типизации и асинхронности. */
-    static async _createMapInstance(containerElement: HTMLElement, state: ymaps.IMapState): Promise<ymaps.Map> {
+    private async _createMapInstance(containerElement: HTMLElement, state: ymaps.IMapState, options: IMapOptions): Promise<ymaps.Map> {
         await ymaps.ready()
-        return new ymaps.Map(containerElement, { center: [55.76, 37.64], zoom: 7 })
+        return new ymaps.Map(containerElement, state, options)
     }
 }

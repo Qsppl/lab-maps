@@ -6,7 +6,7 @@ globalThis.testIsMobile = function () {
 
 globalThis.mobile = testIsMobile()
 
-globalThis.app = {
+const app = globalThis.app = {
     languageLocale: $('html').attr('lang'),
 
     scroll_speed: 200,

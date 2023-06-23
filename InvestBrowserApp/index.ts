@@ -6,12 +6,16 @@ import { Subscriber } from "./User/Subscriber.js"
 import { UserInterface } from "./UserInterface/UserInterface.js"
 
 const mapAdapter = new YandexMapAdapter('#map')
+globalThis.mapAdapter = mapAdapter
 
 const user = getUserImplementation()
+globalThis.user = user
 
-const userInterface = new UserInterface(mapAdapter, user.languageLocale)
+const userInterface = new UserInterface(mapAdapter, mapAdapter, user.languageLocale)
+globalThis.userInterface = userInterface
 
 const investBrowser = new Browser(mapAdapter, userInterface, user)
+globalThis.investBrowser = investBrowser
 
 /** Ищет подходящую имплементациюю класса InvestBrowserUser */
 function getUserImplementation() {

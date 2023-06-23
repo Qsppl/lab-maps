@@ -2,6 +2,7 @@ node_modules/*
 !node_modules/@types
 node_modules/@types/*
 !node_modules/@types/yandex-maps
+!node_modules/@types/jquery-toast-plugin
 out/*
 !out/index.html
 !out/ambient

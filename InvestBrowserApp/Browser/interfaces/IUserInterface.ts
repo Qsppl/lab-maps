@@ -1,5 +1,7 @@
+export type ZoomRestrictionPresetKeys = "for-guest" | "for-registrant" | "for-subscriber"
+
 export interface IUserInterface {
-    limitMapZoom(): void
+    setZoomRestriction(presetKey: ZoomRestrictionPresetKeys): void
 
     doSomething2(): void
 

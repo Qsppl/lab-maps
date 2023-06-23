@@ -32,14 +32,13 @@ export class Browser {
         this._userInterface = userInterface
         this._user = user
 
-        if (user.isGuest || user.isRegistrant) {
-            userInterface.doSomething2();
-            if (user.isSpentDailyLimit || (user.numberOfViewedProjects >= this.limitOfProjectViews)) {
-                userInterface.limitMapZoom()
-            }
+        if (user.isGuest || user.isRegistrant) userInterface.doSomething2()
+        if (user.isSpentDailyLimit || (user.numberOfViewedProjects >= this.limitOfProjectViews)) {
+            if (user.isGuest) userInterface.setZoomRestriction("for-guest")
+            if (user.isRegistrant) userInterface.setZoomRestriction("for-registrant")
         }
 
-        this.showProjects()
+        // this.showProjects()
     }
 
     private showProjects() {
