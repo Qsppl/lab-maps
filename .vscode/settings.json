@@ -3,5 +3,6 @@
     "typescript.format.semicolons": "remove",
     "explorer.copyRelativePathSeparator": "/",
     "javascript.preferences.importModuleSpecifierEnding": "js",
-    "typescript.preferences.importModuleSpecifierEnding": "js"
+    "typescript.preferences.importModuleSpecifierEnding": "js",
+    "files.autoSave": "onFocusChange"
 }
