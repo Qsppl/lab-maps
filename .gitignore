@@ -1,11 +1,9 @@
+# exclude exclude modules except @types/yandex-maps and @types/jquery-toast-plugin
 node_modules/*
-!node_modules/@types
-node_modules/@types/*
 !node_modules/@types/yandex-maps
 !node_modules/@types/jquery-toast-plugin
-out/*
-!out/index.html
-!out/ambient
-!out/favicon.ico
 
-InvestBrowserApp/**/*.js
+# exclude compiled files
+public/compiled
+
+source/**/*.js

@@ -22,5 +22,5 @@ function getUserImplementation() {
     if (globalThis.isGuest) return new Guest()
     if (globalThis.isRegistrant) return new Registrant()
     if (globalThis.isSubscriber) return new Subscriber()
-    throw new TypeError("Не определены необходимые глобальные переменные")
+    throw new TypeError("Не определены необходимые глqweобальные переменные")
 }
