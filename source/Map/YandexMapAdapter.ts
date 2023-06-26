@@ -17,14 +17,16 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
     _yandexMap: Promise<ymaps.Map>
 
     constructor(containerElement: HTMLElement | string) {
-        const { controls, center, zoom } = this
+        const { center, zoom } = this
         const { minZoom, maxZoom } = this.zoomRange
+
         this._yandexMap = app.querySelectorPromise(containerElement).then(element => {
             return this._createMapInstance(element, { controls: [], center, zoom }, { minZoom, maxZoom })
         })
+
         this._yandexMap.then(map => {
+            this.controls.push(new ymaps.control.SearchControl(this.searchControlParameters))
             this.controls.map(control => map.controls.add(control))
-            map.controls.add(new ymaps.control.SearchControl(this.searchControlParameters))
         })
 
         this._yandexMap.then(map => map.events.add("wheel", this._callZoomBoundsingHandlers.bind(this)))
