@@ -1,5 +1,5 @@
 import * as ymaps from "yandex-maps"
-import { ClusteredLoader } from "../ClusteredLoader.js"
+import { ClusteredLoader } from "../../ClusterCollectionDecorator/Clustered.js"
 import { IconUrlCreator } from "./IconUrlCreator.js"
 import { ProjectData } from "./dto/ProjectData.js"
 

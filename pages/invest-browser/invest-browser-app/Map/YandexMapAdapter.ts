@@ -26,6 +26,7 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
 
         this._yandexMap.then(map => {
             this.controls.push(new ymaps.control.SearchControl(this.searchControlParameters))
+            this.controls.push(new ymaps.control.ZoomControl({ options: { size: 'small', position: { right: 10, top: 200 } } }))
             this.controls.map(control => map.controls.add(control))
         })
 

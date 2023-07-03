@@ -1,3 +1,4 @@
+import ProjectsLoader from "./ObjectsLoader/ProjectsLoader.js"
 import { IMap } from "./interfaces/IMap.js"
 import { IUser } from "./interfaces/IUser.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"
@@ -39,7 +40,61 @@ export class Browser {
             if (user.isRegistrant) userInterface.setZoomRestriction("for-registrant")
         }
 
+
+        // ############################################################
+        // Состояние пользовательского интерфейса
+        // ########################################
+
+        let mapState: { center: [number, number], zoom: number } = {
+            center: [59.92, 30.3413],
+            zoom: this.restoreMapZoom() || 7
+        }
+
+        if (!user.isGuest && this.restoreMapCenter2()) {
+            mapState.center = this.restoreMapCenter2()
+        } else if ((this.restoreFocusedProjects()).length > 1) {
+            mapState.center = [59.92, 60.3413]
+        } else if (user.isGuest) {
+            // nothing.
+        } else if (this.restoreMapCenter1()) {
+            mapState = { center: this.restoreMapCenter1(), zoom: 11 }
+        } else if (this.findUserCompanies(user).length) {
+            const { map_x, map_y } = this.findUserCompanies(user)[0].addr
+            mapState.center = [+map_x, +map_y]
+        }
+
+        // ############################################################
+        // end section
+        // ########################################
+
+        const projectsLoader = new ProjectsLoader()
+        userInterface.addPointSpawnerAsProjects(projectsLoader)
+
         // this.showProjects()
+    }
+
+    private findUserCompanies(user: IUser): { id: number; company_id: number; addess: string; typeData: CompanyProdAddressType }[] {
+        return companyProdAddresses || []
+    }
+
+    private restoreMapCenter1(): [number, number] | null {
+        if (get_x && get_y) return [+get_x, +get_y]
+        return null
+    }
+
+    private restoreMapCenter2(): [number, number] | null {
+        if (app.getUrlParameter('center'))
+            return app.getUrlParameter('center').split(',').map((value) => +value)
+        return null
+    }
+
+    private restoreMapZoom(): number | null {
+        if (app.getUrlParameter('zoom')) return (+(app.getUrlParameter('zoom')))
+        return null
+    }
+
+    private restoreFocusedProjects(): number[] {
+        return projects_to_map || []
     }
 
     // private showProjects() {

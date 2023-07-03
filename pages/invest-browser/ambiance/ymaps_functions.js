@@ -266,15 +266,7 @@ const tooManyApproximatelyProjects = function (ids) {
 
 const addZoomButtons = function (map) {
     map.controls.add(
-        new ymaps.control.ZoomControl({
-            options: {
-                size: 'small',
-                position: {
-                    right: 10,
-                    top: 200
-                }
-            }
-        })
+        new ymaps.control.ZoomControl({ options: { size: 'small', position: { right: 10, top: 200 } } })
     )
 }
 

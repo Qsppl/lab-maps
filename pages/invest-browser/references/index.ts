@@ -837,41 +837,48 @@ $(document).ready(function () {
         // zonesModel = new Zone(industrial_global)
         // globalThis.companyModel = new Company()
 
-        // let needOpenProject = false
+        let needOpenProject = false
 
+        // is default map options
         let gridSize = 36
         let base_coords = [59.92, 30.3413]
         let base_zoom = 7
 
-        if (!get_x && !get_y && companyProdAddresses) {
-            // companyProdAddresses.forEach((addr) => {
-            //     base_coords = [+addr.map_x, +addr.map_y]
-            //     base_zoom = 7
-            // })
-        } else if (get_x && get_y) {
-            // if (get_project_id) needOpenProject = true
-            // base_coords = [+get_x, +get_y]
-            // base_zoom = 11
+
+        // ############################################################
+        // Состояние пользовательского интерфейса
+        // ########################################
+
+        // is findUserCompanies && _userInterface.focusOnCompany
+        if (get_x && get_y) {
+            if (get_project_id) needOpenProject = true
+            base_coords = [+get_x, +get_y]
+            base_zoom = 11
+        } else if (companyProdAddresses) {
+            companyProdAddresses.forEach((addr) => {
+                base_coords = [+(addr.map_x), +(addr.map_y)]
+                base_zoom = 7
+            })
         }
 
         if (isGuest) {
-            // base_coords = [59.92, 30.3413]
-            // base_zoom = 7
+            base_coords = [59.92, 30.3413]
+            base_zoom = 7
         }
 
         if (projects_to_map && projects_to_map.length > 1) {
-            // base_coords = [59.92, 60.3413]
-            // base_zoom = 7
+            base_coords = [59.92, 60.3413]
+            base_zoom = 7
         }
 
         if (!isGuest && app.getUrlParameter('center')) {
-            // /** Url deserialized param 'center' */
-            // base_coords = app.getUrlParameter('center').split(',').map((value) => +value)
+            /** Url deserialized param 'center' */
+            base_coords = app.getUrlParameter('center').split(',').map((value) => +value)
         }
 
         if (!isGuest && app.getUrlParameter('zoom')) {
-            // /** Url deserialized param 'zoom' */
-            // base_zoom = +(app.getUrlParameter('zoom'))
+            /** Url deserialized param 'zoom' */
+            base_zoom = +(app.getUrlParameter('zoom'))
         }
 
         map = new ymaps.Map('map', {
@@ -889,7 +896,7 @@ $(document).ready(function () {
 
         // currentZoom = base_zoom
 
-        // addZoomButtons(map)
+        addZoomButtons(map)
 
         // globalThis.gos_global = globalThis.gos_global ?? []
         // selected_stage = getFilter_stage[0] ? getFilter_stage.map(t => +t) : stage_global.map(t => +t.id)
@@ -919,7 +926,7 @@ $(document).ready(function () {
             + '{% endif %}'
         )
 
-        objectManager = new ymaps.objectManager.LoadingObjectManager('/ymap/load?bounds=%b', {
+        objectManager = new ymaps.LoadingObjectManager('/ymap/load?bounds=%b', {
             clusterize: true,
             gridSize: gridSize
         })

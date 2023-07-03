@@ -6,4 +6,6 @@ export interface IUserInterface {
 
     /** Надо что-нибудь сделать эдакое, чтобы ничего не понятно и никак не узнать зачем. Это важно (наверное) */
     doSomething2(): void
+    
+    focusOnCompany(company: { id: number; company_id: number; addess: string; typeData: CompanyProdAddressType }): void
 }
