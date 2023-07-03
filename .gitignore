@@ -4,6 +4,4 @@ node_modules/*
 !node_modules/@types/jquery-toast-plugin
 
 # exclude compiled files
-public/compiled
-
-source/**/*.js
+*.js

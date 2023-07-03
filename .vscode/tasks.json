@@ -2,6 +2,15 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "liveServer - .vscode/settings.json",
+            "command": "${command:extension.liveServer.goOnline}",
+            "group": "build",
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "tsc-live-checks",
             "type": "typescript",
             "tsconfig": "tsconfig.json",
             "option": "watch",
@@ -9,26 +18,17 @@
                 "$tsc-watch"
             ],
             "group": "build",
-            "label": "tsc: watch - tsconfig.json",
             "runOptions": {
                 "runOn": "folderOpen"
             },
             "presentation": {
                 "echo": true,
                 "reveal": "never",
-                "revealProblems": "onProblem",
+                "revealProblems": "never",
                 "focus": false,
                 "panel": "shared",
                 "showReuseMessage": true,
-                "clear": false
-            }
-        },
-        {
-            "command": "${command:extension.liveServer.goOnline}",
-            "group": "build",
-            "label": "liveServer: watch",
-            "runOptions": {
-              "runOn": "folderOpen"
+                "clear": true
             }
         }
     ]
