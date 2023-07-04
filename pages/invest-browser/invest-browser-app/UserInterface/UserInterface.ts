@@ -1,6 +1,9 @@
 "use strict"
 
+import { ProjectsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/project.js"
 import { IUserInterface, ZoomRestrictionPresetKeys } from "../Browser/interfaces/IUserInterface.js"
+import { PlacemarkCollectionDecorator } from "./LoadingObjectsManagerDecorators/ProjectsManagerDecorators/PlacemarkCollectionDecorator.js"
+import { ClusterCollectionDecorator } from "./LoadingObjectsManagerDecorators/SelectablePlacemarksManagerDecorator/ClusterCollectionDecorator.js"
 import { ModalRestrictionNotice } from "./ModalRestrictionNotice.js"
 import { IMap } from "./interfaces/IMap.js"
 import { IPlace } from "./interfaces/IPlace.js"
@@ -13,6 +16,7 @@ export class UserInterface implements IUserInterface {
         ["for-guest", { baseZoom: 7, zoomInLimit: 10, zoomInMessageKey: "zoom-restriction-guest", zoomOutLimit: 4, zoomOutMessageKey: "zoom-out-limit" }],
         ["for-registrant", { baseZoom: 7, zoomInLimit: 10, zoomInMessageKey: "zoom-in-restriction-registrant", zoomOutLimit: 4, zoomOutMessageKey: "zoom-out-limit" }],
     ])
+
     private readonly localizationAssets = {
         ru: {
             'zoom-in-limit': 'Это максимальное приближение карты',
@@ -29,8 +33,11 @@ export class UserInterface implements IUserInterface {
     }
 
     private readonly _map: IMap
+
     private readonly _place: IPlace
+
     private readonly _localizationAsset
+
     /** Модальное окно уведомляющее пользователя о том что у него есть какое-либо ограничение использования приложения */
     private readonly _modalRestrictionNotice: Promise<ModalRestrictionNotice>
 
@@ -56,6 +63,11 @@ export class UserInterface implements IUserInterface {
         this.setMapZoomBoundsingNotions(this.localizationAssets["zoom-in-limit"], this.localizationAssets["zoom-out-limit"])
         this._map.onZoomInBoundsing = (() => { this.showWarningNotice(this._zoomInMessage, "map-zoom-boundsing-notions") }).bind(this)
         this._map.onZoomOutBoundsing = (() => { this.showWarningNotice(this._zoomOutMessage, "map-zoom-boundsing-notions") }).bind(this)
+    }
+
+    public addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
+        new PlacemarkCollectionDecorator(loadingManager.objects)
+        new ClusterCollectionDecorator(loadingManager.clusters)
     }
 
     public setZoomRestriction(presetKey: ZoomRestrictionPresetKeys): void {

@@ -1,6 +1,6 @@
 "use strict"
 
-import ProjectsLoader from "./GeoObjects/Projects/ProjectsLoader.js"
+import { ProjectsManager } from "./LoadingObjectsManager/ProjectsManager.js"
 import { IMap } from "./interfaces/IMap.js"
 import { IUser } from "./interfaces/IUser.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"
@@ -17,9 +17,10 @@ import { IUserInterface } from "./interfaces/IUserInterface.js"
  * - Реализует логику отображения данных на `Карте`
  */
 export class Browser {
-    // private static requests = {
-    //     'project-points-for-the-map': '/ymap/load-projects?bounds=%b'
-    // }
+    private readonly APIPoints = {
+        "ymaps-projects-feathures": '/pages/invest-browser/ambiance/jsonp-projects.js'
+    }
+    
     // private static _projectsDataEndpoint = ['POST', `${app.en_prefix}/ajax/ymaps/get-projects-data`]
 
     /** ограничение просмотров проектов для незарегистрированных пользователей */
@@ -69,17 +70,23 @@ export class Browser {
         // end section
         // ########################################
 
-        const projectsLoader = new ProjectsLoader()
-        userInterface.addPointSpawnerAsProjects(projectsLoader)
+        this.addProjects()
 
         // this.showProjects()
     }
 
+    private async addProjects(): Promise<void> {
+        const loadingManager = await new ProjectsManager(this.APIPoints["ymaps-projects-feathures"]).loadingManager
+        this._userInterface.addProjectsManager(loadingManager)
+        this._map.addProjectsManager(loadingManager)
+    }
+
     private findUserCompanies(user: IUser): { id: number; company_id: number; addess: string; typeData: CompanyProdAddressType }[] {
-        return companyProdAddresses || []
+        return globalThis.companyProdAddresses || []
     }
 
     private restoreMapCenter1(): [number, number] | null {
+        const {get_x, get_y} = globalThis
         if (get_x && get_y) return [+get_x, +get_y]
         return null
     }
@@ -96,7 +103,7 @@ export class Browser {
     }
 
     private restoreFocusedProjects(): number[] {
-        return projects_to_map || []
+        return globalThis.projects_to_map || []
     }
 
     // private showProjects() {

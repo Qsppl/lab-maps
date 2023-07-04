@@ -1,17 +1,17 @@
 "use strict"
 
-import { LoadingObjectManager } from "./dto/projects.js"
+import { ProjectsLoadingObjectManager } from "./dto/project.js"
 
 const ymaps = globalThis.ymaps
 
-export class ProjectsLoader {
-    protected readonly _loadingManager: Promise<LoadingObjectManager>
+export class ProjectsManager {
+    protected readonly _loadingManager: Promise<ProjectsLoadingObjectManager>
 
     constructor(urlTemplate: string) {
         this._loadingManager = this.createLoaderManager(urlTemplate)
     }
 
-    private async createLoaderManager(urlTemplate: string): Promise<LoadingObjectManager> {
+    private async createLoaderManager(urlTemplate: string): Promise<ProjectsLoadingObjectManager> {
         await ymaps.ready()
         return new ymaps.LoadingObjectManager(
             urlTemplate,
@@ -19,7 +19,7 @@ export class ProjectsLoader {
         )
     }
 
-    get loadingManager(): Promise<LoadingObjectManager> {
+    get loadingManager(): Promise<ProjectsLoadingObjectManager> {
         return this._loadingManager
     }
 }

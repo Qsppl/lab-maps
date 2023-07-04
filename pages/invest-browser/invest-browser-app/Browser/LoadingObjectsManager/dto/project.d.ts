@@ -1,19 +1,20 @@
+import { ISelectableFeathureJson, ISelectableFeathureJsonOptions } from "./object.js"
+
 // this type is placed in a separate declaration so that it can be imported in other files
-export type IFeatureJsonOptions = ymaps.PlacemarkOptions & {
-    isVisited?: boolean | undefined
-    isSelected?: boolean | undefined
+export type ProjectFeathureOptions = ISelectableFeathureJsonOptions<ymaps.PlacemarkOptions> & {
+    isFolderItem?: boolean | undefined
 }
 
 // this type is placed in a separate declaration so that it can be imported in other files
-export type IFeatureJsonProperties = {
+export type ProjectFeathureProperties = {
     /** какая-то фигня (равно Id проекта) */
     clusterCaption: number
 }
 
-export type IFeatureJson = ymaps.geometry.json.IFeatureJson<
+export type ProjectFeathure = ISelectableFeathureJson<
     ymaps.geometry.json.Point,
-    IFeatureJsonOptions,
-    IFeatureJsonProperties
+    ProjectFeathureOptions,
+    ProjectFeathureProperties
 > & {
     /** Стадия проекта */
     t: number
@@ -37,8 +38,8 @@ export type IFeatureJson = ymaps.geometry.json.IFeatureJson<
     iz: number | null
 }
 
-export type LoadingObjectManager = ymaps.LoadingObjectManager<
-    IFeatureJson,
-    IFeatureJsonOptions,
+export type ProjectsLoadingObjectManager = ymaps.LoadingObjectManager<
+    ProjectFeathure,
+    ProjectFeathureOptions,
     ymaps.geometryEditor.PointOptions
 >

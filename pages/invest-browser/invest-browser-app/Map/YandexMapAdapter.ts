@@ -3,6 +3,8 @@
 import { IMap as IBrowserMap } from "../Browser/interfaces/IMap.js"
 import { IMap as IUserInterfaceMap } from "../UserInterface/interfaces/IMap.js"
 import { IPlace as IUserInterfacePlace } from "../UserInterface/interfaces/IPlace.js"
+import ProjectsLoader from "../Browser/ObjectsLoader/ProjectsLoader.js"
+import { ProjectsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/project.js"
 
 const ymaps = globalThis.ymaps
 
@@ -26,6 +28,7 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
         })
 
         this._yandexMap.then(map => {
+            this.setCenter([50, 50])
             this.controls.push(new ymaps.control.SearchControl(this.searchControlParameters))
             this.controls.push(new ymaps.control.ZoomControl({ options: { size: 'small', position: { right: 10, top: 200 } } }))
             this.controls.map(control => map.controls.add(control))
@@ -73,6 +76,11 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
         if (minZoom < 0 || maxZoom < minZoom) throw new Error();
 
         (await this._yandexMap).options.set({ minZoom, maxZoom })
+    }
+
+    public async addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
+        const map = await this._yandexMap
+        map.geoObjects.add(loadingManager)
     }
 
     /** Обработчик выхода за пределы масштабирования карты. Сообщает пользователю о блокировке масштабирования, если она сработала. */

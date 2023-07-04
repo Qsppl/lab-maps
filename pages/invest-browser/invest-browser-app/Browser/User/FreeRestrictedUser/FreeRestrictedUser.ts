@@ -18,12 +18,14 @@ export abstract class FreeRestrictedUser extends BaseUser {
     constructor() {
         super()
 
-        this.isSpentDailyLimit = this.identifyUserAgent().then(userAgentIdentity => {
-            return this.getIsSpentDailyLimit(userAgentIdentity)
-        }).catch((reason) => {
-            console.warn(reason || "Ошибка загрузки данных")
-            return true
-        })
+        this.isSpentDailyLimit = this.identifyUserAgent()
+            .then(userAgentIdentity => {
+                return this.getIsSpentDailyLimit(userAgentIdentity)
+            })
+            .catch((reason) => {
+                console.warn(reason || "Ошибка загрузки данных")
+                return true
+            })
     }
 
     /** Возвращает идентификатор посетителя вычисляемый по его user-agent'у */
@@ -43,7 +45,14 @@ export abstract class FreeRestrictedUser extends BaseUser {
     protected async getIsSpentDailyLimit(userAgentIdentity: string): Promise<boolean> {
         const requestURL = `${this.checkGuestDailyLimitURL}?fpId=${userAgentIdentity}`
 
-        const response: Response = await fetch(requestURL, { credentials: 'same-origin' })
+        let response: Response;
+        try {
+            response = await fetch(requestURL, { credentials: 'same-origin' })
+        } catch (error) {
+            console.warn(error || "Ошибка загрузки данных")
+            return false
+        }
+
         if (!response.ok) throw new Error("Ошибка сети!")
         if (response.status !== 200) throw new Error(`Неправильный запрос: ${requestURL}`)
 
