@@ -1,8 +1,17 @@
-declare namespace projectsLoader {
-    type Feathure = ymaps.geometry.json.IFeatureJson<
+declare namespace GeoObjects.Projects.json {
+    // this type is placed in a separate declaration so that it can be imported in other files
+    type IFeatureJsonProperties = {
+        /** какая-то фигня (равно Id проекта) */
+        clusterCaption: number
+    }
+
+    // this type is placed in a separate declaration so that it can be imported in other files
+    type IFeatureJsonOptions = GeoObjects.json.IFeatureJsonOptions & ymaps.PlacemarkOptions
+
+    type IFeatureJson = GeoObjects.json.IFeatureJson <
         ymaps.geometry.json.Point,
-        PlacemarkOptions,
-        {} & ProjectJsonProperties
+        IFeatureJsonOptions,
+        IFeatureJsonProperties
     > & {
         /** Стадия проекта */
         t: number
@@ -25,13 +34,4 @@ declare namespace projectsLoader {
         /** Id экономической зоны */
         iz: number | null
     }
-
-    type ProjectJsonProperties = {
-        /** какая-то фигня (равно Id проекта) */
-        clusterCaption: number
-    }
-
-    type PlacemarkOptions = ymaps.PlacemarkOptions
-
-    type PointOptions = ymaps.geometryEditor.PointOptions
 }
