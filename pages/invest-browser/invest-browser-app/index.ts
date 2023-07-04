@@ -1,10 +1,10 @@
 "use strict"
 
 import { Browser } from "./Browser/Browser.js"
+import { Guest } from "./Browser/User/Guest.js"
+import { Registrant } from "./Browser/User/Registrant.js"
+import { Subscriber } from "./Browser/User/Subscriber.js"
 import { YandexMapAdapter } from "./Map/YandexMapAdapter.js"
-import { Guest } from "./User/Guest.js"
-import { Registrant } from "./User/Registrant.js"
-import { Subscriber } from "./User/Subscriber.js"
 import { UserInterface } from "./UserInterface/UserInterface.js"
 
 /** Компонент карты. Он не выполняет самостоятельной работы, просто управляется UserInterface или Browser */
