@@ -1,3 +1,5 @@
+"use strict"
+
 import { Browser } from "./Browser/Browser.js"
 import { YandexMapAdapter } from "./Map/YandexMapAdapter.js"
 import { Guest } from "./User/Guest.js"

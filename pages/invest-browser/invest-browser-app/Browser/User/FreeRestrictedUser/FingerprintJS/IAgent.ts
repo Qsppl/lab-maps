@@ -1,3 +1,5 @@
+"use strict"
+
 import { ResultDto } from "./ResultDto.js"
 
 export interface IAgent {

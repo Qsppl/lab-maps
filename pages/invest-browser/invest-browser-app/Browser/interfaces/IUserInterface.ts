@@ -1,3 +1,5 @@
+"use strict"
+
 export type ZoomRestrictionPresetKeys = "for-guest" | "for-registrant" | "for-subscriber"
 
 export interface IUserInterface {

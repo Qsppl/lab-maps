@@ -1,3 +1,5 @@
+"use strict"
+
 import { IUserInterface, ZoomRestrictionPresetKeys } from "../Browser/interfaces/IUserInterface.js"
 import { ModalRestrictionNotice } from "./ModalRestrictionNotice.js"
 import { IMap } from "./interfaces/IMap.js"

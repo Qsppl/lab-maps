@@ -1,3 +1,5 @@
+"use strict"
+
 import { BaseUser } from "../BaseUser.js"
 import { FingerprintJSModule } from "./FingerprintJS/FingerprintJSModule.js"
 import { IAgent } from "./FingerprintJS/IAgent.js"

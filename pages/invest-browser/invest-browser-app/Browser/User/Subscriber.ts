@@ -1,3 +1,5 @@
+"use strict"
+
 import { IUser } from "../Browser/interfaces/IUser.js"
 import { BaseUser } from "./BaseUser.js"
 

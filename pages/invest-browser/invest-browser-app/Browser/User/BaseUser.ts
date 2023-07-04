@@ -1,3 +1,5 @@
+"use strict"
+
 export abstract class BaseUser {
     /** Текущая языковая локализация страницы */
     get languageLocale(): 'ru' | 'en' {

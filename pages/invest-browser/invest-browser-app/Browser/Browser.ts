@@ -1,4 +1,6 @@
-import ProjectsLoader from "./ObjectsLoader/ProjectsLoader.js"
+"use strict"
+
+import ProjectsLoader from "./GeoObjects/Projects/ProjectsLoader.js"
 import { IMap } from "./interfaces/IMap.js"
 import { IUser } from "./interfaces/IUser.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"

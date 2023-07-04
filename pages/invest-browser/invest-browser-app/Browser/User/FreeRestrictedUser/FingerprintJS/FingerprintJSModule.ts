@@ -1,3 +1,5 @@
+"use strict"
+
 import { IAgent } from "./IAgent.js"
 
 export type FingerprintJSModule = {
