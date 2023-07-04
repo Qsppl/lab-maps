@@ -1,4 +1,6 @@
-const projectIconsUrl = '/web/img/map/icons/svg/'
+"use strict"
+
+const projectIconsUrl = 'https://investprojects.info/web/img/map/icons/svg/'
 
 const stageToToken = new Map<number, string>([
     [17, "st_1"], [2, "st_2"], [3, "st_3"], [7, "st_4"], [4, "st_5"], [5, "st_6"], [8, "st_upgrade"], [6, "st_pause"], [10, "st_stop"]
@@ -14,19 +16,19 @@ const isVisitedToToken = new Map<boolean, string>([[false, "normal"], [true, "vi
 const isFolderItemToToken = new Map<boolean, string>([[false, ""], [true, "f"]])
 
 export function resolveProjectIconUri(stage: number, isForeign: boolean, isVisited: boolean, isFolderItem: boolean): string {
-    const parts = [
+    const parts = ([
         // first: /stage_...
-        this.stageToToken.get(stage),
+        stageToToken.get(+stage),
 
         // then: ...foreign_...
-        this.isForeignToToken.get(isForeign),
+        isForeignToToken.get(isForeign),
 
         // and then: ...visited_...
-        this.isVisitedToToken.get(isVisited),
+        isVisitedToToken.get(isVisited),
 
         // finnaly: ...folder_...
-        this.isFolderItemToToken.get(isFolderItem)
-    ].filter((value) => value.length)
+        isFolderItemToToken.get(isFolderItem)
+    ].filter(value => value.length))
 
     return `${projectIconsUrl}${parts.join("_")}.svg`
 }

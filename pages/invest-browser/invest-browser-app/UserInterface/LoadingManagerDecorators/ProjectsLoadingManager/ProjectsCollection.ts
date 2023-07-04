@@ -1,5 +1,7 @@
-import { PlacemarkDesign } from "./PlacemarkDesign.js"
-import { resolveProjectIconUri } from "./Projects/IconUrlCreator.js"
+"use strict"
+
+import { PlacemarkDesign } from "../PlacemarkDesign.js"
+import { resolveProjectIconUri } from "./resolveProjectIconUri.js"
 
 const ymaps = globalThis.ymaps
 
@@ -28,15 +30,17 @@ export class ProjectsPlacemarkDesign extends PlacemarkDesign {
 
     private setPersonalPlacemarkDesign(placemarkId: string, feathure: projectsLoader.Feathure) {
         const stage: number = feathure.t
-        const isVisited: boolean = this._selectedObjects.has(placemarkId)
-        const { isFolderItem, isForeign } = feathure.properties
+        const isForeign = feathure.o && (feathure.o == 89)
+        const isFolderItem: boolean = !!(globalThis._folders && globalThis._folders.some(({ projects }) => { return projects[placemarkId] }))
 
-        const placemarkOptions = {
-            __proto__: this.optionsAssets.default,
-            iconImageHref: resolveProjectIconUri()
-        }
-        objectManager.objects.setObjectOptions(placemarkId, {
-            iconImageHref: this.getIconUriForPoint(point)
+        this.setPersonalOptionsAsset(placemarkId, "default", {
+            ...this.optionsAssets.default,
+            ...{ iconImageHref: resolveProjectIconUri(stage, isForeign, false, isFolderItem) }
+        })
+
+        this.setPersonalOptionsAsset(placemarkId, "visited", {
+            ...this.optionsAssets.default,
+            ...{ iconImageHref: resolveProjectIconUri(stage, isForeign, true, isFolderItem) }
         })
     }
 }
