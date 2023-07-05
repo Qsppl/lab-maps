@@ -10,12 +10,15 @@ const stageToToken = new Map<number, string>([
 const isForeignToToken = new Map<boolean, string>([[false, ""], [true, "eaeu"]])
 
 /** Наличие и отсутствие каждого флага соответствует определенному токену в адресе иконки */
-const isVisitedToToken = new Map<boolean, string>([[false, "normal"], [true, "visited"]])
+const isSelectedToToken = new Map<boolean, string>([[false, ""], [true, "active"]])
+
+/** Наличие и отсутствие каждого флага соответствует определенному токену в адресе иконки */
+const isVisitedToToken = new Map<boolean, string>([[false, ""], [true, "visited"]])
 
 /** Наличие и отсутствие каждого флага соответствует определенному токену в адресе иконки */
 const isFolderItemToToken = new Map<boolean, string>([[false, ""], [true, "f"]])
 
-export function resolveProjectIconUri(stage: number, isForeign: boolean, isVisited: boolean, isFolderItem: boolean): string {
+export function resolveProjectIconUri(stage: number, isForeign: boolean, isSelected: boolean, isVisited: boolean, isFolderItem: boolean): string {
     const parts = ([
         // first: /stage_...
         stageToToken.get(+stage),
@@ -24,7 +27,7 @@ export function resolveProjectIconUri(stage: number, isForeign: boolean, isVisit
         isForeignToToken.get(isForeign),
 
         // and then: ...visited_...
-        isVisitedToToken.get(isVisited),
+        isSelectedToToken.get(isSelected) || isVisitedToToken.get(isVisited) || "normal",
 
         // finnaly: ...folder_...
         isFolderItemToToken.get(isFolderItem)

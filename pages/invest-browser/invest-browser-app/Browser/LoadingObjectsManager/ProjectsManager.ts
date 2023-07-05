@@ -15,7 +15,7 @@ export class ProjectsManager {
         await ymaps.ready()
         return new ymaps.LoadingObjectManager(
             urlTemplate,
-            { clusterize: true, gridSize: 36 }
+            { clusterize: true, gridSize: 36, clusterDisableClickZoom: true },
         )
     }
 

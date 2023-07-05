@@ -65,9 +65,21 @@ export class UserInterface implements IUserInterface {
         this._map.onZoomOutBoundsing = (() => { this.showWarningNotice(this._zoomOutMessage, "map-zoom-boundsing-notions") }).bind(this)
     }
 
-    public addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
-        new PlacemarkCollectionDecorator(loadingManager.objects)
-        new ClusterCollectionDecorator(loadingManager.clusters)
+    public async addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
+        globalThis.loadingManager = loadingManager
+        const placemarksDecorator = new PlacemarkCollectionDecorator(loadingManager.objects)
+        const clustersDecorator = new ClusterCollectionDecorator(loadingManager.clusters)
+
+        placemarksDecorator.selectSingleObjectHook = (placemark) => {
+            clustersDecorator.unselectAll()
+            return true
+        }
+
+        clustersDecorator.selectSingleObjectHook = (cluster) => {
+            placemarksDecorator.unselectAll()
+            cluster.properties.geoObjects.map(placemark => placemarksDecorator.selectObject(placemark))
+            return true
+        }
     }
 
     public setZoomRestriction(presetKey: ZoomRestrictionPresetKeys): void {
