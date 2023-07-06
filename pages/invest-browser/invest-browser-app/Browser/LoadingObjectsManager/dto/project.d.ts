@@ -38,6 +38,8 @@ export type ProjectFeathure = ISelectableFeathureJson<
     iz: number | null
 }
 
+export type ProjectsLoadingObjectManagerOptions = ymaps.LoadingObjectManagerOptions<ProjectFeathureOptions, ymaps.geometryEditor.PointOptions>
+
 export type ProjectsLoadingObjectManager = ymaps.LoadingObjectManager<
     ProjectFeathureOptions,
     ProjectFeathure,

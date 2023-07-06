@@ -30,6 +30,15 @@
                 "showReuseMessage": true,
                 "clear": true
             }
+        },
+        {
+            "type": "typescript",
+            "tsconfig": "tsconfig.json",
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "group": "build",
+            "label": "tsc: build - tsconfig.json"
         }
     ]
 }

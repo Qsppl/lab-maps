@@ -1,8 +1,6 @@
-"use strict"
-
 export interface IUser {
     /** Текущая языковая локализация страницы */
-    languageLocale: "en" | "ru"
+    languageLocale: "en" | "ru";
     /** Количество просмотренных пользователем проектов */
-    numberOfViewedProjects: number
+    numberOfViewedProjects: number;
 }

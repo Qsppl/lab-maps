@@ -1,6 +1,8 @@
 "use strict"
 
-export abstract class BaseUser {
+import { IUser } from "../interfaces/IUser.js"
+
+export abstract class BaseUser implements IUser {
     /** Текущая языковая локализация страницы */
     get languageLocale(): 'ru' | 'en' {
         let lang = document.documentElement.lang

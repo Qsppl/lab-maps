@@ -11,24 +11,36 @@ const ymaps = globalThis.ymaps
 /** Класс инкапсулирующий логику управления картой. */
 export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUserInterfaceMap {
     private readonly center: [number, number] = [59.92, 30.3413]
+
     private readonly zoom = 7
+
     private readonly zoomRange = { minZoom: 4, maxZoom: 18 }
+    
 
     private readonly controls: (ymaps.IControl | ymaps.ControlKey)[] = ['rulerControl']
+
     private readonly searchControlParameters: ymaps.control.ISearchControlParameters = { options: { provider: 'yandex#search' } }
 
-    _yandexMap: Promise<ymaps.Map>
 
+    private _onZoomInBoundsing?: CallableFunction
+    
+    private _onZoomOutBoundsing?: CallableFunction
+
+
+    public readonly _yandexMap: Promise<ymaps.Map>
+
+    
     constructor(containerElement: HTMLElement | string) {
         const { center, zoom } = this
         const { minZoom, maxZoom } = this.zoomRange
 
-        this._yandexMap = app.querySelectorPromise(containerElement).then(element => {
-            return this._createMapInstance(element, { controls: [], center, zoom }, { minZoom, maxZoom })
-        })
+        if (typeof containerElement === "string") {
+            this._yandexMap = app.querySelectorPromise(containerElement).then(element => {
+                return this._createMapInstance(element, { controls: [], center, zoom }, { minZoom, maxZoom })
+            })
+        } else this._yandexMap = this._createMapInstance(containerElement, { controls: [], center, zoom }, { minZoom, maxZoom })
 
         this._yandexMap.then(map => {
-            this.setCenter([50, 50])
             this.controls.push(new ymaps.control.SearchControl(this.searchControlParameters))
             this.controls.push(new ymaps.control.ZoomControl({ options: { size: 'small', position: { right: 10, top: 200 } } }))
             this.controls.map(control => map.controls.add(control))
@@ -106,14 +118,12 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
         if (isMapZoomedOut && zoom <= minZoom && this._onZoomOutBoundsing) this._onZoomOutBoundsing()
     }
 
-    private _onZoomInBoundsing?: CallableFunction
-    set onZoomInBoundsing(callback: CallableFunction) {
+    public set onZoomInBoundsing(callback: CallableFunction) {
         if (this._onZoomInBoundsing) throw new Error("")
         this._onZoomInBoundsing = callback
     }
 
-    private _onZoomOutBoundsing?: CallableFunction
-    set onZoomOutBoundsing(callback: CallableFunction) {
+    public set onZoomOutBoundsing(callback: CallableFunction) {
         if (this._onZoomOutBoundsing) throw new Error("")
         this._onZoomOutBoundsing = callback
     }

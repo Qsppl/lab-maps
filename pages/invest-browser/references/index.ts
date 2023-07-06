@@ -838,6 +838,7 @@ $(document).ready(function () {
         // globalThis.companyModel = new Company()
 
         let needOpenProject = false
+        if (app.getUrlParameter('x') && app.getUrlParameter('y') && app.getUrlParameter('project_id')) needOpenProject = true
 
         // is default map options
         let gridSize = 36
@@ -849,36 +850,32 @@ $(document).ready(function () {
         // Состояние пользовательского интерфейса
         // ########################################
 
-        // is findUserCompanies && _userInterface.focusOnCompany
-        if (get_x && get_y) {
-            if (get_project_id) needOpenProject = true
-            base_coords = [+get_x, +get_y]
-            base_zoom = 11
-        } else if (companyProdAddresses) {
-            companyProdAddresses.forEach((addr) => {
-                base_coords = [+(addr.map_x), +(addr.map_y)]
-                base_zoom = 7
-            })
+        if (globalThis.companyProdAddresses) {
+            const lastUserCompany = globalThis.companyProdAddresses[globalThis.companyProdAddresses.length - 1]
+            base_coords = [lastUserCompany.map_x, lastUserCompany.map_y]
+            base_zoom = 7
         }
+
+        // is findUserCompanies && _userInterface.focusOnCompany
+        if (app.getUrlParameter('x') && app.getUrlParameter('y')) {
+            base_coords = [+app.getUrlParameter('x'), +app.getUrlParameter('y')]
+            base_zoom = 11
+        }
+
+        /** Url deserialized param 'center' */
+        if (app.getUrlParameter('center')) base_coords = app.getUrlParameter('center').split(',').map((value: string) => +value)
+
+        /** Url deserialized param 'zoom' */
+        if (app.getUrlParameter('zoom')) base_zoom = +(app.getUrlParameter('zoom'))
 
         if (isGuest) {
             base_coords = [59.92, 30.3413]
             base_zoom = 7
         }
 
-        if (projects_to_map && projects_to_map.length > 1) {
+        if (globalThis.projects_to_map && globalThis.projects_to_map.length > 1) {
             base_coords = [59.92, 60.3413]
             base_zoom = 7
-        }
-
-        if (!isGuest && app.getUrlParameter('center')) {
-            /** Url deserialized param 'center' */
-            base_coords = app.getUrlParameter('center').split(',').map((value) => +value)
-        }
-
-        if (!isGuest && app.getUrlParameter('zoom')) {
-            /** Url deserialized param 'zoom' */
-            base_zoom = +(app.getUrlParameter('zoom'))
         }
 
         map = new ymaps.Map('map', {

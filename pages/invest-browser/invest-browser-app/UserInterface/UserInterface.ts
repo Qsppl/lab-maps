@@ -45,7 +45,7 @@ export class UserInterface implements IUserInterface {
 
     private _zoomOutMessage: string
 
-    constructor(map: IMap, place: IPlace, languageLocale: string) {
+    constructor(map: IMap, place: IPlace, languageLocale: "ru" | "en") {
         this._map = map
         this._place = place
         this._localizationAsset = this.localizationAssets[languageLocale]
@@ -55,12 +55,10 @@ export class UserInterface implements IUserInterface {
             return new ModalRestrictionNotice(element)
         })
 
-        this.doSomething1()
-
         // Ymaps по умолчанию имеет ограничение на зум.
         // Будем выводить сообщения при попытке выкрутить масштабирование за границы ограничения.
         // Так красивее
-        this.setMapZoomBoundsingNotions(this.localizationAssets["zoom-in-limit"], this.localizationAssets["zoom-out-limit"])
+        this.setMapZoomBoundsingNotions(this._localizationAsset["zoom-in-limit"], this._localizationAsset["zoom-out-limit"])
         this._map.onZoomInBoundsing = (() => { this.showWarningNotice(this._zoomInMessage, "map-zoom-boundsing-notions") }).bind(this)
         this._map.onZoomOutBoundsing = (() => { this.showWarningNotice(this._zoomOutMessage, "map-zoom-boundsing-notions") }).bind(this)
     }
@@ -91,13 +89,6 @@ export class UserInterface implements IUserInterface {
         if (baseZoom) this._map.setZoom(baseZoom)
         this._map.setZoomRange(zoomOutLimit, zoomInLimit)
         this.setMapZoomBoundsingNotions(zoomInMessage, zoomOutMessage)
-    }
-
-    public doSomething2() {
-        $('header').hover(function () { $('body').removeClass('modal-open') })
-        $('.form-control--search').click(function () { $(this).trigger("focus") })
-        $('header').addClass('position-relative')
-        $('header').css('z-index', '1060')
     }
 
     // async showRestrictionNotice() {
@@ -148,12 +139,6 @@ export class UserInterface implements IUserInterface {
             loader: false,
             class: 'toast_larger-font toast_map_alert',
             stack: false
-        })
-    }
-
-    private doSomething1() {
-        document.addEventListener('DOMContentLoaded', () => {
-            document.body.classList.add('specModalBlackout', 'maps-page')
         })
     }
 }

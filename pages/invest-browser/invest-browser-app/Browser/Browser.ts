@@ -1,8 +1,12 @@
 "use strict"
 
+import { ProjectsManagerDecorator } from "../UserInterface/LoadingObjectsManagerDecorators/ProjectsManagerDecorators/ProjectsManagerDecorator.js"
 import { ProjectsManager } from "./LoadingObjectsManager/ProjectsManager.js"
+import { ProjectFeathure, ProjectsLoadingObjectManager } from "./LoadingObjectsManager/dto/project.js"
+import { Guest } from "./User/Guest.js"
+import { Registrant } from "./User/Registrant.js"
+import { Subscriber } from "./User/Subscriber.js"
 import { IMap } from "./interfaces/IMap.js"
-import { IUser } from "./interfaces/IUser.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"
 
 /**
@@ -17,110 +21,131 @@ import { IUserInterface } from "./interfaces/IUserInterface.js"
  * - Реализует логику отображения данных на `Карте`
  */
 export class Browser {
-    private readonly APIPoints = {
-        "ymaps-projects-feathures": '/pages/invest-browser/ambiance/jsonp-projects.js'
-    }
-    
+    // private readonly APIPoints = {
+    //     "ymaps-projects-feathures": '/pages/invest-browser/ambiance/jsonp-projects.js'
+    // }
+
     // private static _projectsDataEndpoint = ['POST', `${app.en_prefix}/ajax/ymaps/get-projects-data`]
 
     /** ограничение просмотров проектов для незарегистрированных пользователей */
     private readonly limitOfProjectViews = 10;
 
-    private _map: IMap
-    private _userInterface: IUserInterface
-    private _user: IUser
 
-    constructor(map: IMap, userInterface: IUserInterface, user: IUser) {
+    private _map: IMap
+
+    private _userInterface: IUserInterface
+
+    private _user: Guest | Registrant | Subscriber
+
+
+    public onLoadProject: (projectFeathure: ProjectFeathure) => void = () => { }
+
+    public get countOfViewedProjects(): number {
+        return +localStorage.getItem('gsp')
+    }
+
+    public set countOfViewedProjects(value: number) {
+        localStorage.setItem('gsp', String(value))
+    }
+
+    constructor(map: IMap, userInterface: IUserInterface, user: Guest | Registrant | Subscriber) {
         this._map = map
         this._userInterface = userInterface
         this._user = user
 
-        if (user.isGuest || user.isRegistrant) userInterface.doSomething2()
+        if (user instanceof Guest || user instanceof Registrant) this.initForFreeUserWithRestrictions(user)
+        else if (user instanceof Subscriber) this.initForSubscriber(user)
+        else throw new TypeError("")
+
+        const restoredMapState = this.restoreMapState()
+        if (restoredMapState.center) map.setCenter(restoredMapState.center)
+        if (restoredMapState.zoom) map.setZoom(restoredMapState.zoom)
+    }
+
+    public async addProjects(url: string = "/pages/invest-browser/ambiance/jsonp-projects.js"): Promise<ProjectsLoadingObjectManager> {
+        const loadingManager = await new ProjectsManager(url, ProjectsManagerDecorator.clustererOptionsAsset).loadingManager
+
+        this._userInterface.addProjectsManager(loadingManager)
+
+        loadingManager.objects.events.add('add', (event: ymaps.IEvent<MouseEvent>) => {
+            const targetObject: ProjectFeathure = event.get("child")
+            this.onLoadProject(targetObject)
+            loadingManager.objects.setObjectOptions(targetObject.id, {
+                isFolderItem: this.isProjectInAnyFolder(targetObject)
+            })
+        })
+
+        this._map.addProjectsManager(loadingManager)
+
+        return loadingManager
+    }
+
+    private async blockForFreeUserWithRestrictions(user: Guest | Registrant): Promise<void> {
+        this.countOfViewedProjects = this.limitOfProjectViews + 1
+
+        // показываем пользователю сообщение о том что у него ограничение стоит
+        $('#no-access-guest-map').modal({ keyboard: false, backdrop: 'static' })
+
+        // если у пользователя указано что он потратил лимит, то все готово
+        if (user.isSpentDailyLimit) return
+
+        // иначе блокируем пользователя и актуализируем его статус
+        const investProjectIdentitiy = await user.investProjectIdentity
+        return new Promise((resolve, reject) => {
+            $.post('/ajax/ymaps/set-map-block', { fpOurId: investProjectIdentitiy })
+                .done(() => {
+                    user.setIsSpentDailyLimit(true)
+                    resolve()
+                })
+                .fail(function () {
+                    console.log('fail ajax fp')
+                    reject()
+                })
+        })
+    }
+
+    private async initForFreeUserWithRestrictions(user: Guest | Registrant): Promise<void> {
+        // сбросить счетчик если у пользователя восстановился дневной лимит
+        if (!user.isSpentDailyLimit && (user.numberOfViewedProjects >= this.limitOfProjectViews)) {
+            this.countOfViewedProjects = 0
+        }
 
         // Если пользователь потратил лимит просмотра проектов, ограничиваем ему зум. Логично.
-        if (user.isSpentDailyLimit || (user.numberOfViewedProjects >= this.limitOfProjectViews)) {
-            if (user.isGuest) userInterface.setZoomRestriction("for-guest")
-            if (user.isRegistrant) userInterface.setZoomRestriction("for-registrant")
+        if (await user.isSpentDailyLimit || (user.numberOfViewedProjects >= this.limitOfProjectViews)) {
+            if (user instanceof Guest) this._userInterface.setZoomRestriction("for-guest")
+            if (user instanceof Registrant) this._userInterface.setZoomRestriction("for-guest")
+            this.blockForFreeUserWithRestrictions(user)
+        }
+    }
+
+    private async initForSubscriber(user: Subscriber) { }
+
+    private restoreMapState(): { center?: [number, number], zoom?: number } {
+        // <<< one
+        if (globalThis.projects_to_map && globalThis.projects_to_map.length > 1) return { center: [59.92, 60.3413], zoom: 7 }
+
+        // <<< two
+        if (this._user instanceof Guest) return { center: [59.92, 30.3413], zoom: 7 }
+
+        let state: { center?: [number, number], zoom?: number } = {}
+
+        // three
+        if (globalThis.companyProdAddresses) {
+            const lastUserCompany = globalThis.companyProdAddresses[globalThis.companyProdAddresses.length - 1]
+            state = { center: [lastUserCompany.map_x, lastUserCompany.map_y], zoom: 7 }
         }
 
+        // four
+        if (app.getUrlParameter('x') && app.getUrlParameter('y')) state = { center: [+app.getUrlParameter('x'), +app.getUrlParameter('y')], zoom: 11 }
 
-        // ############################################################
-        // Состояние пользовательского интерфейса
-        // ########################################
+        // (three & five) || (four & five)
+        if (app.getUrlParameter('center')) state.center = app.getUrlParameter('center').split(',').map((value: string) => +value)
+        if (app.getUrlParameter('zoom')) state.zoom = +(app.getUrlParameter('zoom'))
 
-        let mapState: { center: [number, number], zoom: number } = {
-            center: [59.92, 30.3413],
-            zoom: this.restoreMapZoom() || 7
-        }
-
-        if (!user.isGuest && this.restoreMapCenter2()) {
-            mapState.center = this.restoreMapCenter2()
-        } else if ((this.restoreFocusedProjects()).length > 1) {
-            mapState.center = [59.92, 60.3413]
-        } else if (user.isGuest) {
-            // nothing.
-        } else if (this.restoreMapCenter1()) {
-            mapState = { center: this.restoreMapCenter1(), zoom: 11 }
-        } else if (this.findUserCompanies(user).length) {
-            const { map_x, map_y } = this.findUserCompanies(user)[0].addr
-            mapState.center = [+map_x, +map_y]
-        }
-
-        // ############################################################
-        // end section
-        // ########################################
-
-        this.addProjects()
-
-        // this.showProjects()
+        return state // <<< three || four || (three & five) || (four & five)
     }
 
-    private async addProjects(): Promise<void> {
-        const loadingManager = await new ProjectsManager(this.APIPoints["ymaps-projects-feathures"]).loadingManager
-        this._userInterface.addProjectsManager(loadingManager)
-        this._map.addProjectsManager(loadingManager)
+    private isProjectInAnyFolder(targetObject: ProjectFeathure): boolean {
+        return _folders.some(folder => folder.projects.includes(+targetObject.id))
     }
-
-    private findUserCompanies(user: IUser): { id: number; company_id: number; addess: string; typeData: CompanyProdAddressType }[] {
-        return globalThis.companyProdAddresses || []
-    }
-
-    private restoreMapCenter1(): [number, number] | null {
-        const {get_x, get_y} = globalThis
-        if (get_x && get_y) return [+get_x, +get_y]
-        return null
-    }
-
-    private restoreMapCenter2(): [number, number] | null {
-        if (app.getUrlParameter('center'))
-            return app.getUrlParameter('center').split(',').map((value) => +value)
-        return null
-    }
-
-    private restoreMapZoom(): number | null {
-        if (app.getUrlParameter('zoom')) return (+(app.getUrlParameter('zoom')))
-        return null
-    }
-
-    private restoreFocusedProjects(): number[] {
-        return globalThis.projects_to_map || []
-    }
-
-    // private showProjects() {
-    //     const pointsLoader = new 
-    //     pointsLoader
-    //     const decoratedPointsLoader = this._userInterface.decoratePointsLoader(pointsLoader).asProjects()
-    //     this._userInterface.addPointsLoaderToMap(decoratedPointsLoader)
-    // }
-
-    /** @deprecated */
-    // private static isProjectInAnyFolder(projectData: ProjectsData): boolean {
-    //     for (const folder of _folders) if (folder.projects.includes(projectData.id)) return true
-    //     return false
-    // }
-
-    /** @deprecated */
-    // private static isProjectForeign(projectData: ProjectData): boolean {
-    //     return projectData.o === 89
-    // }
 }

@@ -24,14 +24,14 @@ export function resolveProjectIconUri(stage: number, isForeign: boolean, isSelec
         stageToToken.get(+stage),
 
         // then: ...foreign_...
-        isForeignToToken.get(isForeign),
+        isForeignToToken.get(!!isForeign),
 
         // and then: ...visited_...
-        isSelectedToToken.get(isSelected) || isVisitedToToken.get(isVisited) || "normal",
+        isSelectedToToken.get(!!isSelected) || isVisitedToToken.get(!!isVisited) || "normal",
 
         // finnaly: ...folder_...
-        isFolderItemToToken.get(isFolderItem)
-    ].filter(value => value.length))
+        isFolderItemToToken.get(!!isFolderItem)
+    ].filter(value => value && value.length))
 
     return `${projectIconsUrl}${parts.join("_")}.svg`
 }

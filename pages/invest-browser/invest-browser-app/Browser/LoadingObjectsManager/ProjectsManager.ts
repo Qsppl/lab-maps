@@ -1,22 +1,19 @@
 "use strict"
 
-import { ProjectsLoadingObjectManager } from "./dto/project.js"
+import { ProjectsLoadingObjectManager, ProjectsLoadingObjectManagerOptions } from "./dto/project.js"
 
 const ymaps = globalThis.ymaps
 
 export class ProjectsManager {
     protected readonly _loadingManager: Promise<ProjectsLoadingObjectManager>
 
-    constructor(urlTemplate: string) {
-        this._loadingManager = this.createLoaderManager(urlTemplate)
+    constructor(urlTemplate: string, options?: ProjectsLoadingObjectManagerOptions) {
+        this._loadingManager = this.createLoaderManager(urlTemplate, options)
     }
 
-    private async createLoaderManager(urlTemplate: string): Promise<ProjectsLoadingObjectManager> {
+    private async createLoaderManager(urlTemplate: string, options?: ProjectsLoadingObjectManagerOptions): Promise<ProjectsLoadingObjectManager> {
         await ymaps.ready()
-        return new ymaps.LoadingObjectManager(
-            urlTemplate,
-            { clusterize: true, gridSize: 36, clusterDisableClickZoom: true },
-        )
+        return new ymaps.LoadingObjectManager(urlTemplate, options)
     }
 
     get loadingManager(): Promise<ProjectsLoadingObjectManager> {

@@ -987,13 +987,10 @@ const app = globalThis.app = {
      * @param {string} selectors 
      * @returns {Promise<HTMLElement | null>}
      */
-    querySelectorPromise(selectors) {
+    async querySelectorPromise(selectors) {
         if (typeof selectors !== 'string') new TypeError()
-        return new Promise((resolve, reject) => {
-            if (document.readyState === "complete") resolve(document.querySelector(selectors))
-            else document.addEventListener('DOMContentLoaded', () => {
-                resolve(document.querySelector(selectors))
-            })
-        })
+        if (document.readyState === "complete") return document.querySelector(selectors)
+        await new Promise((resolve) => { document.addEventListener('DOMContentLoaded', resolve()) })
+        return document.querySelector(selectors)
     }
 }
