@@ -1,7 +1,10 @@
 "use strict"
 
-import { ProjectsManagerDecorator } from "../UserInterface/LoadingObjectsManagerDecorators/ProjectsManagerDecorators/ProjectsManagerDecorator.js"
+import { ProjectsManagerDecorator } from "../UserInterface/LoadingObjectsManagerDecorators/projects/ProjectManagerDecorator.js"
+import { GroupManagerDecorator } from "../Use"
+import { GroupsManager } from "./LoadingObjectsManager/GroupsManager.js"
 import { ProjectsManager } from "./LoadingObjectsManager/ProjectsManager.js"
+import { GroupsLoadingObjectManager } from "./LoadingObjectsManager/dto/group.js"
 import { ProjectFeathure, ProjectsLoadingObjectManager } from "./LoadingObjectsManager/dto/project.js"
 import { Guest } from "./User/Guest.js"
 import { Registrant } from "./User/Registrant.js"
@@ -21,12 +24,6 @@ import { IUserInterface } from "./interfaces/IUserInterface.js"
  * - Реализует логику отображения данных на `Карте`
  */
 export class Browser {
-    // private readonly APIPoints = {
-    //     "ymaps-projects-feathures": '/pages/invest-browser/ambiance/jsonp-projects.js'
-    // }
-
-    // private static _projectsDataEndpoint = ['POST', `${app.en_prefix}/ajax/ymaps/get-projects-data`]
-
     /** ограничение просмотров проектов для незарегистрированных пользователей */
     private readonly limitOfProjectViews = 10;
 
@@ -76,6 +73,16 @@ export class Browser {
         })
 
         this._map.addProjectsManager(loadingManager)
+
+        return loadingManager
+    }
+
+    public async addGroups(url: string = "/pages/invest-browser/ambiance/jsonp-load-project-groups.js"): Promise<GroupsLoadingObjectManager> {
+        const loadingManager = await new GroupsManager(url, GroupManagerDecorator.clustererOptionsAsset).loadingManager
+
+        this._userInterface.addGroupsManager(loadingManager)
+
+        this._map.addGroupsManager(loadingManager)
 
         return loadingManager
     }

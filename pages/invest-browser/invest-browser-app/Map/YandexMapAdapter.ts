@@ -5,6 +5,7 @@ import { IMap as IUserInterfaceMap } from "../UserInterface/interfaces/IMap.js"
 import { IPlace as IUserInterfacePlace } from "../UserInterface/interfaces/IPlace.js"
 import ProjectsLoader from "../Browser/ObjectsLoader/ProjectsLoader.js"
 import { ProjectsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/project.js"
+import { GroupsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/group.js"
 
 const ymaps = globalThis.ymaps
 
@@ -91,6 +92,11 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
     }
 
     public async addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
+        const map = await this._yandexMap
+        map.geoObjects.add(loadingManager)
+    }
+
+    public async addGroupsManager(loadingManager: GroupsLoadingObjectManager) {
         const map = await this._yandexMap
         map.geoObjects.add(loadingManager)
     }

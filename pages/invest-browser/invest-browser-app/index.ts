@@ -49,6 +49,7 @@ async function main() {
     const investBrowser = new Browser(mapAdapter, userInterface, user)
 
     const projectsLoadingManager = investBrowser.addProjects()
+    // const groupsLoadingManager = investBrowser.addGroups()
 
     return {
         user,

@@ -1,5 +1,6 @@
 "use strict"
 
+import { GroupsLoadingObjectManager } from "../LoadingObjectsManager/dto/group.js"
 import { ProjectsLoadingObjectManager } from "../LoadingObjectsManager/dto/project.js"
 
 export interface IMap {
@@ -8,4 +9,6 @@ export interface IMap {
     setZoom(zoom: number): Promise<void>
 
     addProjectsManager(loadingManager: ProjectsLoadingObjectManager): Promise<void>
+
+    addGroupsManager(loadingManager: GroupsLoadingObjectManager): Promise<void>
 }

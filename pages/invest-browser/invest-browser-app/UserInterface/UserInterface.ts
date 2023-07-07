@@ -1,9 +1,12 @@
 "use strict"
 
+import { GroupsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/group.js"
 import { ProjectsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/project.js"
 import { IUserInterface, ZoomRestrictionPresetKeys } from "../Browser/interfaces/IUserInterface.js"
-import { PlacemarkCollectionDecorator } from "./LoadingObjectsManagerDecorators/ProjectsManagerDecorators/PlacemarkCollectionDecorator.js"
-import { ClusterCollectionDecorator } from "./LoadingObjectsManagerDecorators/SelectablePlacemarksManagerDecorator/ClusterCollectionDecorator.js"
+import { GroupClustersDecorator } from "./LoadingObjectsManagerDecorators/groups/GroupClustersDecorator.js"
+import { GroupObjectsDecorator } from "./LoadingObjectsManagerDecorators/groups/GroupObjectsDecorator.js"
+import { ProjectObjectsDecorator } from "./LoadingObjectsManagerDecorators/projects/ProjectObjectsDecorator.js"
+import { SelectableClustersDecorator } from "./LoadingObjectsManagerDecorators/selectable/SelectableClustersDecorator.js"
 import { ModalRestrictionNotice } from "./ModalRestrictionNotice.js"
 import { IMap } from "./interfaces/IMap.js"
 import { IPlace } from "./interfaces/IPlace.js"
@@ -57,16 +60,30 @@ export class UserInterface implements IUserInterface {
 
         // Ymaps по умолчанию имеет ограничение на зум.
         // Будем выводить сообщения при попытке выкрутить масштабирование за границы ограничения.
-        // Так красивее
         this.setMapZoomBoundsingNotions(this._localizationAsset["zoom-in-limit"], this._localizationAsset["zoom-out-limit"])
         this._map.onZoomInBoundsing = (() => { this.showWarningNotice(this._zoomInMessage, "map-zoom-boundsing-notions") }).bind(this)
         this._map.onZoomOutBoundsing = (() => { this.showWarningNotice(this._zoomOutMessage, "map-zoom-boundsing-notions") }).bind(this)
     }
 
     public async addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
-        globalThis.loadingManager = loadingManager
-        const placemarksDecorator = new PlacemarkCollectionDecorator(loadingManager.objects)
-        const clustersDecorator = new ClusterCollectionDecorator(loadingManager.clusters)
+        const placemarksDecorator = new ProjectObjectsDecorator(loadingManager.objects)
+        const clustersDecorator = new SelectableClustersDecorator(loadingManager.clusters)
+
+        placemarksDecorator.selectSingleObjectHook = (placemark) => {
+            clustersDecorator.unselectAll()
+            return true
+        }
+
+        clustersDecorator.selectSingleObjectHook = (cluster) => {
+            placemarksDecorator.unselectAll()
+            cluster.properties.geoObjects.map(placemark => placemarksDecorator.selectObject(placemark))
+            return true
+        }
+    }
+
+    public async addGroupsManager(loadingManager: GroupsLoadingObjectManager): Promise<void> {
+        const placemarksDecorator = new GroupObjectsDecorator(loadingManager.objects)
+        const clustersDecorator = new GroupClustersDecorator(loadingManager.clusters)
 
         placemarksDecorator.selectSingleObjectHook = (placemark) => {
             clustersDecorator.unselectAll()
@@ -90,33 +107,6 @@ export class UserInterface implements IUserInterface {
         this._map.setZoomRange(zoomOutLimit, zoomInLimit)
         this.setMapZoomBoundsingNotions(zoomInMessage, zoomOutMessage)
     }
-
-    // async showRestrictionNotice() {
-    //     //     const restrictionNotice = await this._modalRestrictionNotice
-
-    //     //     if (restrictionNotice.isShow) {
-    //     //         // Зачем? Что тут, блин, происходит?
-    //     //         setTimeout(this._showRestrictionNotice.bind(this), 3000)
-    //     //     } else {
-    //     //         localStorage.setItem('gsp', '11')
-    //     //         $('#no-access-guest-map').modal({
-    //     //             keyboard: false,
-    //     //             backdrop: 'static'
-    //     //         })
-    //     //     }
-
-    //     //     if (isFpOK) {
-    //     //         $.post('/ajax/ymaps/set-map-block', {
-    //     //             fpOurId: fpOurId,
-    //     //         })
-    //     //             .done(function (res) {
-    //     //                 res = JSON.parse(res).data
-    //     //                 fpOurId = res.userFpId
-    //     //                 isFpOK = res.isMapLimited
-    //     //             })
-    //     //             .fail(function () { console.log('fail ajax fp') })
-    //     //     }
-    // }
 
     private setMapZoomBoundsingNotions(zoomInMessage: string, zoomOutMessage: string) {
         this._zoomInMessage = zoomInMessage

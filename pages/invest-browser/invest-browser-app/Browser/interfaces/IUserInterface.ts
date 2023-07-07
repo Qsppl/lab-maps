@@ -1,5 +1,6 @@
 "use strict"
 
+import { GroupsLoadingObjectManager } from "../LoadingObjectsManager/dto/group.js"
 import { ProjectsLoadingObjectManager } from "../LoadingObjectsManager/dto/project.js"
 
 export type ZoomRestrictionPresetKeys = "for-guest" | "for-registrant" | "for-subscriber"
@@ -11,4 +12,6 @@ export interface IUserInterface {
     focusOnCompany(company: { id: number; company_id: number; addess: string; typeData: CompanyProdAddressType }): void
 
     addProjectsManager(loadingManager: ProjectsLoadingObjectManager): Promise<void>
+
+    addGroupsManager(loadingManager: GroupsLoadingObjectManager): Promise<void>
 }

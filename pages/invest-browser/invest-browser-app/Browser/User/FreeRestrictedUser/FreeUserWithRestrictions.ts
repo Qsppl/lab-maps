@@ -71,11 +71,17 @@ export abstract class FreeUserWithRestrictions extends BaseUser implements IFree
         const investProjectIdentity = requestObject.then((response: string | JQuery.jqXHR<any>): number => {
             if (typeof response !== "string") throw new Error("fail ajax fp!")
             return +JSON.parse(response).data.userFpId
+        }).catch(reason => {
+            console.warn(reason)
+            return 0
         })
 
         const isSpentDailyLimit = requestObject.then((response: string | JQuery.jqXHR<any>): boolean => {
             if (typeof response !== "string") throw new Error("fail ajax fp!")
             return !!JSON.parse(response).data.isMapLimited
+        }).catch(reason => {
+            console.warn(reason)
+            return ""
         })
 
         return { investProjectIdentity, isSpentDailyLimit }
