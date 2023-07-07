@@ -3,7 +3,6 @@
 import { IMap as IBrowserMap } from "../Browser/interfaces/IMap.js"
 import { IMap as IUserInterfaceMap } from "../UserInterface/interfaces/IMap.js"
 import { IPlace as IUserInterfacePlace } from "../UserInterface/interfaces/IPlace.js"
-import ProjectsLoader from "../Browser/ObjectsLoader/ProjectsLoader.js"
 import { ProjectsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/project.js"
 import { GroupsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/group.js"
 

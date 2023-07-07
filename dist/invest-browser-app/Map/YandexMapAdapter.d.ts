@@ -3,6 +3,7 @@ import { IMap as IBrowserMap } from "../Browser/interfaces/IMap.js";
 import { IMap as IUserInterfaceMap } from "../UserInterface/interfaces/IMap.js";
 import { IPlace as IUserInterfacePlace } from "../UserInterface/interfaces/IPlace.js";
 import { ProjectsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/project.js";
+import { GroupsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/group.js";
 /** Класс инкапсулирующий логику управления картой. */
 export declare class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUserInterfaceMap {
     private readonly center;
@@ -23,6 +24,7 @@ export declare class YandexMapAdapter implements IBrowserMap, IUserInterfacePlac
      */
     setZoomRange(minZoom: number, maxZoom: number): Promise<void>;
     addProjectsManager(loadingManager: ProjectsLoadingObjectManager): Promise<void>;
+    addGroupsManager(loadingManager: GroupsLoadingObjectManager): Promise<void>;
     /** Обработчик выхода за пределы масштабирования карты. Сообщает пользователю о блокировке масштабирования, если она сработала. */
     private _callZoomBoundsingHandlers;
     set onZoomInBoundsing(callback: CallableFunction);

@@ -105,9 +105,8 @@ declare var _seenGroupMy: number[] | undefined
 /** 
  * Компания, пренадлежащая текущему пользователю
  * - Пустой массив, если у пользователя нет компании или у компании пользователя не указано ни фактического, ни юридического адреса
- * @type {{ id: number; company_id: number; addess: string; typeData: CompanyProdAddressType }[] | undefined}
  */
-declare var companyProdAddresses: { id: number; company_id: number; addess: string; typeData: CompanyProdAddressType }[] | undefined
+declare var companyProdAddresses: { id: number, company_id: number, type_id: number, prod_address: string, map_x: number, map_y: number, gisp_iid: number, typeData: { id: number, company_id: number, name: string } }[] | undefined
 
 /** @type {boolean | undefined} Пользователь - администратор? */
 declare const isAdmin: boolean | undefined

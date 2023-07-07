@@ -1,3 +1,4 @@
+import { GroupsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/group.js";
 import { ProjectsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/project.js";
 import { IUserInterface, ZoomRestrictionPresetKeys } from "../Browser/interfaces/IUserInterface.js";
 import { IMap } from "./interfaces/IMap.js";
@@ -13,8 +14,10 @@ export declare class UserInterface implements IUserInterface {
     private readonly _modalRestrictionNotice;
     private _zoomInMessage;
     private _zoomOutMessage;
+    private readonly SelectableCollectionsOfMap;
     constructor(map: IMap, place: IPlace, languageLocale: "ru" | "en");
     addProjectsManager(loadingManager: ProjectsLoadingObjectManager): Promise<void>;
+    addGroupsManager(loadingManager: GroupsLoadingObjectManager): Promise<void>;
     setZoomRestriction(presetKey: ZoomRestrictionPresetKeys): void;
     private setMapZoomBoundsingNotions;
     private showWarningNotice;

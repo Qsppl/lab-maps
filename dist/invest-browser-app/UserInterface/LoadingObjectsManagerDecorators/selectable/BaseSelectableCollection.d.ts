@@ -2,7 +2,7 @@
 import { ISelectableClusterJson, ISelectableClusterJsonOptions, ISelectableFeathureJson, ISelectableFeathureJsonOptions } from "../../../Browser/LoadingObjectsManager/dto/object.js";
 export type ObjectOptionsAssetKey = "default" | "select" | "visited";
 export type ObjectOptionsModifierKey = "normal" | "hover";
-export declare abstract class SelectableCollectionDecorator<FeathureOptions extends ISelectableFeathureJsonOptions<ymaps.IOptionManagerData> | ISelectableClusterJsonOptions<ymaps.IOptionManagerData>, Feathure extends ISelectableFeathureJson<any, any, any> | ISelectableClusterJson<any, any, any, any>, ObjectCollectionOptions extends ymaps.objectManager.ObjectCollectionOptions<FeathureOptions, ymaps.PlacemarkOptions>, ObjectCollection extends ymaps.objectManager.ObjectCollection<any, any, any> | ymaps.objectManager.ClusterCollection<any, any, any>> {
+export declare abstract class BaseSelectableCollection<FeathureOptions extends ISelectableFeathureJsonOptions<ymaps.IOptionManagerData> | ISelectableClusterJsonOptions<ymaps.IOptionManagerData>, Feathure extends ISelectableFeathureJson<any, any, any> | ISelectableClusterJson<any, any, any, any>, ObjectCollectionOptions extends ymaps.objectManager.ObjectCollectionOptions<FeathureOptions, ymaps.PlacemarkOptions>, ObjectCollection extends ymaps.objectManager.ObjectCollection<any, any, any> | ymaps.objectManager.ClusterCollection<any, any, any>> {
     protected readonly _collection: ObjectCollection;
     readonly ready: Promise<void>;
     protected getDefaultAsset(): Promise<ObjectCollectionOptions>;

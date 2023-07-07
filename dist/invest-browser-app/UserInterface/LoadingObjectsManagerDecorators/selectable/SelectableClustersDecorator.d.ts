@@ -1,6 +1,6 @@
 /// <reference types="yandex-maps" />
 import { ISelectableClusterJson, ISelectableClusterJsonOptions, ISelectableFeathureJson, ISelectableFeathureJsonOptions } from "../../../Browser/LoadingObjectsManager/dto/object.js";
-import { ObjectOptionsAssetKey, ObjectOptionsModifierKey, SelectableCollectionDecorator } from "./SelectableCollectionDecorator.js";
+import { ObjectOptionsAssetKey, ObjectOptionsModifierKey, BaseSelectableCollection } from "./BaseSelectableCollection.js";
 type ClusterLayout = ymaps.IClassConstructor<ymaps.layout.templateBased.Base>;
 type ChildFeathureOptions = ISelectableFeathureJsonOptions<{}>;
 type ChildFeathure = ISelectableFeathureJson<any, ChildFeathureOptions, any>;
@@ -11,7 +11,7 @@ type ClusterCollectionOptions = ymaps.objectManager.ClusterCollectionOptions<Chi
 };
 type ClusterCollection = ymaps.objectManager.ClusterCollection<ChildFeathureOptions, ChildFeathure, ymaps.LoadingObjectManager<any, any, any, any>, ClusterOptions, Cluster>;
 /** Это декоратор коллекции кластеров класса LoadingObjectsManager - у него кластеры могут быть только Placemark'ами. Содержимое кластеров - любое. */
-export declare class ClusterCollectionDecorator extends SelectableCollectionDecorator<ClusterOptions, Cluster, ClusterCollectionOptions, ClusterCollection> {
+export declare class SelectableClustersDecorator extends BaseSelectableCollection<ClusterOptions, Cluster, ClusterCollectionOptions, ClusterCollection> {
     protected readonly _Layout: Promise<ClusterLayout>;
     protected readonly _LayoutHover: Promise<ClusterLayout>;
     protected getLayout(): Promise<ClusterLayout>;

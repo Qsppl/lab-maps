@@ -1,7 +1,7 @@
 "use strict"
 
+import { GroupManagerDecorator } from "../UserInterface/LoadingObjectsManagerDecorators/groups/GroupManagerDecorator.js"
 import { ProjectsManagerDecorator } from "../UserInterface/LoadingObjectsManagerDecorators/projects/ProjectManagerDecorator.js"
-import { GroupManagerDecorator } from "../Use"
 import { GroupsManager } from "./LoadingObjectsManager/GroupsManager.js"
 import { ProjectsManager } from "./LoadingObjectsManager/ProjectsManager.js"
 import { GroupsLoadingObjectManager } from "./LoadingObjectsManager/dto/group.js"
@@ -67,8 +67,9 @@ export class Browser {
         loadingManager.objects.events.add('add', (event: ymaps.IEvent<MouseEvent>) => {
             const targetObject: ProjectFeathure = event.get("child")
             this.onLoadProject(targetObject)
+            const isFolderItem = this.isProjectInAnyFolder(targetObject)
             loadingManager.objects.setObjectOptions(targetObject.id, {
-                isFolderItem: this.isProjectInAnyFolder(targetObject)
+                isFolderItem
             })
         })
 
@@ -153,6 +154,7 @@ export class Browser {
     }
 
     private isProjectInAnyFolder(targetObject: ProjectFeathure): boolean {
-        return _folders.some(folder => folder.projects.includes(+targetObject.id))
+        if (!globalThis._folders) return false
+        return globalThis._folders.some(folder => folder.projects.includes(+targetObject.id))
     }
 }

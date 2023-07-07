@@ -1,3 +1,4 @@
+import { GroupsLoadingObjectManager } from "./LoadingObjectsManager/dto/group.js";
 import { ProjectFeathure, ProjectsLoadingObjectManager } from "./LoadingObjectsManager/dto/project.js";
 import { Guest } from "./User/Guest.js";
 import { Registrant } from "./User/Registrant.js";
@@ -26,6 +27,7 @@ export declare class Browser {
     set countOfViewedProjects(value: number);
     constructor(map: IMap, userInterface: IUserInterface, user: Guest | Registrant | Subscriber);
     addProjects(url?: string): Promise<ProjectsLoadingObjectManager>;
+    addGroups(url?: string): Promise<GroupsLoadingObjectManager>;
     private blockForFreeUserWithRestrictions;
     private initForFreeUserWithRestrictions;
     private initForSubscriber;

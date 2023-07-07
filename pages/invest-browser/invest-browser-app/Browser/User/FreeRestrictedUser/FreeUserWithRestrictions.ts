@@ -81,7 +81,7 @@ export abstract class FreeUserWithRestrictions extends BaseUser implements IFree
             return !!JSON.parse(response).data.isMapLimited
         }).catch(reason => {
             console.warn(reason)
-            return ""
+            return false
         })
 
         return { investProjectIdentity, isSpentDailyLimit }

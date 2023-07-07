@@ -6,6 +6,7 @@ import { IUserInterface, ZoomRestrictionPresetKeys } from "../Browser/interfaces
 import { GroupClustersDecorator } from "./LoadingObjectsManagerDecorators/groups/GroupClustersDecorator.js"
 import { GroupObjectsDecorator } from "./LoadingObjectsManagerDecorators/groups/GroupObjectsDecorator.js"
 import { ProjectObjectsDecorator } from "./LoadingObjectsManagerDecorators/projects/ProjectObjectsDecorator.js"
+import { BaseSelectableCollection } from "./LoadingObjectsManagerDecorators/selectable/BaseSelectableCollection.js"
 import { SelectableClustersDecorator } from "./LoadingObjectsManagerDecorators/selectable/SelectableClustersDecorator.js"
 import { ModalRestrictionNotice } from "./ModalRestrictionNotice.js"
 import { IMap } from "./interfaces/IMap.js"
@@ -48,6 +49,8 @@ export class UserInterface implements IUserInterface {
 
     private _zoomOutMessage: string
 
+    private readonly SelectableCollectionsOfMap: Set<BaseSelectableCollection<any, any, any, any>> = new Set()
+
     constructor(map: IMap, place: IPlace, languageLocale: "ru" | "en") {
         this._map = map
         this._place = place
@@ -67,32 +70,46 @@ export class UserInterface implements IUserInterface {
 
     public async addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
         const placemarksDecorator = new ProjectObjectsDecorator(loadingManager.objects)
+        this.SelectableCollectionsOfMap.add(placemarksDecorator)
         const clustersDecorator = new SelectableClustersDecorator(loadingManager.clusters)
+        this.SelectableCollectionsOfMap.add(clustersDecorator)
 
         placemarksDecorator.selectSingleObjectHook = (placemark) => {
-            clustersDecorator.unselectAll()
+            const emmiter = placemarksDecorator
+            for (const collection of this.SelectableCollectionsOfMap) if (collection !== emmiter) collection.unselectAll()
             return true
         }
 
         clustersDecorator.selectSingleObjectHook = (cluster) => {
-            placemarksDecorator.unselectAll()
+            const emmiter = clustersDecorator
+            for (const collection of this.SelectableCollectionsOfMap) if (collection !== emmiter) collection.unselectAll()
+
+            // select всех проектов в кластере
             cluster.properties.geoObjects.map(placemark => placemarksDecorator.selectObject(placemark))
+
             return true
         }
     }
 
     public async addGroupsManager(loadingManager: GroupsLoadingObjectManager): Promise<void> {
         const placemarksDecorator = new GroupObjectsDecorator(loadingManager.objects)
+        this.SelectableCollectionsOfMap.add(placemarksDecorator)
         const clustersDecorator = new GroupClustersDecorator(loadingManager.clusters)
+        this.SelectableCollectionsOfMap.add(clustersDecorator)
 
         placemarksDecorator.selectSingleObjectHook = (placemark) => {
-            clustersDecorator.unselectAll()
+            const emmiter = placemarksDecorator
+            for (const collection of this.SelectableCollectionsOfMap) if (collection !== emmiter) collection.unselectAll()
             return true
         }
 
         clustersDecorator.selectSingleObjectHook = (cluster) => {
-            placemarksDecorator.unselectAll()
+            const emmiter = clustersDecorator
+            for (const collection of this.SelectableCollectionsOfMap) if (collection !== emmiter) collection.unselectAll()
+
+            // select всех проектов в кластере
             cluster.properties.geoObjects.map(placemark => placemarksDecorator.selectObject(placemark))
+
             return true
         }
     }

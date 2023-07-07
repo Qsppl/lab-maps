@@ -1,15 +1,13 @@
 /// <reference types="yandex-maps" />
 import { ISelectableFeathureJson, ISelectableFeathureJsonOptions } from "../../../Browser/LoadingObjectsManager/dto/object.js";
-import { SelectableCollectionDecorator } from "./SelectableCollectionDecorator.js";
-export type ObjectOptionsAssetKey = "default" | "select" | "visited";
-export type ObjectOptionsModifierKey = "normal" | "hover";
+import { BaseSelectableCollection, ObjectOptionsAssetKey, ObjectOptionsModifierKey } from "./BaseSelectableCollection.js";
 type FeathureOptions = ISelectableFeathureJsonOptions<{}>;
 type Feathure = ISelectableFeathureJson<ymaps.geometry.json.Point, FeathureOptions, {}>;
 type ObjectCollectionOptions = ymaps.objectManager.ObjectCollectionOptions<FeathureOptions, ymaps.PlacemarkOptions> & {
     __proto__?: ObjectCollectionOptions | undefined;
 };
 type ObjectCollection = ymaps.objectManager.ObjectCollection<FeathureOptions, Feathure, ymaps.PlacemarkOptions>;
-export declare class PlacemarkCollectionDecorator extends SelectableCollectionDecorator<FeathureOptions, Feathure, ObjectCollectionOptions, ObjectCollection> {
+export declare class SelectableObjectsDecorator extends BaseSelectableCollection<FeathureOptions, Feathure, ObjectCollectionOptions, ObjectCollection> {
     protected getDefaultAsset(): Promise<ObjectCollectionOptions>;
     /**
      * Метод должен содержать логику вычисления набора опций по:

@@ -29,6 +29,11 @@ export abstract class BaseSelectableCollection<
             const targetId: string = event.get("objectId")
             const targetObject: Feathure = this._collection.getById(targetId)
 
+            if (targetObject === null) {
+                console.warn("target not defined", event)
+                return
+            }
+
             // block hover when checkbox is selected
             if (!!targetObject.options.isSelected) return
 
@@ -39,6 +44,11 @@ export abstract class BaseSelectableCollection<
             const targetId: string = event.get("objectId")
             const targetObject: Feathure = this._collection.getById(targetId)
 
+            if (targetObject === null) {
+                console.warn("target not defined", event)
+                return
+            }
+
             // block hover when checkbox is selected
             if (!!targetObject.options.isSelected) return
 
@@ -48,11 +58,23 @@ export abstract class BaseSelectableCollection<
         collection.events.add('click', (event: ymaps.IEvent<MouseEvent>) => {
             const targetId: string = event.get("objectId")
             const targetObject: Feathure = this._collection.getById(targetId)
+
+            if (targetObject === null) {
+                console.warn("target not defined", event)
+                return
+            }
+
             this.selectSingleObject(targetObject)
         })
 
         collection.events.add('add', (event: ymaps.IEvent<MouseEvent>) => {
             const targetObject: Feathure = event.get("child")
+
+            if (targetObject === null) {
+                console.warn("target not defined", event)
+                return
+            }
+            
             this.resetObjectOptionsAsset(targetObject)
         })
     }

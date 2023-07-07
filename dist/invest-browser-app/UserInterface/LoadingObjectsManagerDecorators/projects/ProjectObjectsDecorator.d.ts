@@ -1,7 +1,8 @@
 /// <reference types="yandex-maps" />
 import { ProjectFeathure } from "../../../Browser/LoadingObjectsManager/dto/project.js";
-import { PlacemarkCollectionDecorator as SelectablePlacemarkCollectionDecorator, ObjectOptionsAssetKey, ObjectOptionsModifierKey } from "../SelectablePlacemarksManagerDecorator/PlacemarkCollectionDecorator.js";
-export declare class PlacemarkCollectionDecorator extends SelectablePlacemarkCollectionDecorator {
+import { ObjectOptionsAssetKey, ObjectOptionsModifierKey } from "../selectable/BaseSelectableCollection.js";
+import { SelectableObjectsDecorator } from "../selectable/SelectableObjectsDecorator.js";
+export declare class ProjectObjectsDecorator extends SelectableObjectsDecorator {
     protected createAsset(targetObject: ProjectFeathure, assetKey: ObjectOptionsAssetKey, modifier?: ObjectOptionsModifierKey): Promise<{
         isVisited?: boolean;
         isSelected?: boolean;
