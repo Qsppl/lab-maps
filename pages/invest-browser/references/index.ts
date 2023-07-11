@@ -12,6 +12,7 @@ let get_zone_id: number | null = null
 let zonesModel: null | Zone = null
 let projects_all = { 'features': [] }
 let industrials_active = []
+/** активно только если активны слои проектов и зон одновременно */
 let projectsInActiveIndustrialsOnly = false
 let search_projects = []
 let borders_onMap = null
@@ -19,8 +20,11 @@ let quantityTotal = 1
 let getProjectsData = null
 let getCompanyData = null
 let selectedFoldersProjects: JQuery<HTMLElement>[] = []
+/** Папки > `true` если "Проекты из выбранных папок > `Отображать`", иначе `false`. Дубликат {@link excludeFolders} */
 let onlyFolders = true
+/** Папки > `true` если "Проекты из выбранных папок > `Скрывать`", иначе `false`. Дубликат {@link onlyFolders} */
 let excludeFolders = false
+/** Папки > Просмотренные > `false` если "Показывать просмотренные проекты" */
 let seenVisible = false
 
 // var MyClusterIconContentLayout: null | ymaps.IClassConstructor<ymaps.layout.templateBased.Base> = null
@@ -83,8 +87,11 @@ if (app.languageLocale === 'en') {
 }
 
 var selected_stage = []
+/** Выбранные типы работ */
 var selected_work_type = []
+/** выбранные Подстадии стадии Приостоновлен (Планирование / Предпроектные проработки / Проектирование / Подготовка к строительству / Строительство / Модернизация) */
 var selected_laststage = []
+/** Выбранные сектора экономики */
 var selected_sector = []
 var selected_region = []
 var selected_gos = []
@@ -854,6 +861,7 @@ $(document).ready(function () {
         // addZoomButtons(map)
 
         globalThis.gos_global = globalThis.gos_global ?? []
+        /** Выбранные стадии. Из URL {@link getFilter_stage} или все стадии {@link stage_global} */
         selected_stage = getFilter_stage[0] ? getFilter_stage.map(t => +t) : stage_global.map(t => +t.id)
         selected_work_type = getFilter_work_type[0] ? getFilter_work_type.map(t => +t) : work_type_global.map(t => +t.id)
         selected_laststage = getFilter_laststage[0] ? getFilter_laststage.map(t => +t) : stage_global.map(t => +t.id)
@@ -1696,11 +1704,7 @@ $(document).ready(function () {
             map.setCenter(coords)
             const color = `rgba(${random(0, 255)}, ${random(0, 255)}, ${random(0, 255)}, 0.27)`
             const warehouseRadius = getCircle(coords, currentTypingRadius, color)
-            $('.wh__radius_input').each(function () {
-                if ($(this).data('id') == clicked_wh.wh_id) {
-                    $(this).css('background-color', color)
-                }
-            })
+            $('.wh__radius_input').each(function () { if ($(this).data('id') == clicked_wh.wh_id) $(this).css('background-color', color) })
             warehouseRadius.wh_id = clicked_wh.wh_id
             /** глобальный массив кликнутых кругов-радиусов */
             g_warehouses_circles.push(warehouseRadius)
@@ -1780,7 +1784,6 @@ function applyFilter(callbacks: CallableFunction[] = []) {
 
 function changeLayers() {
     let checked = []
-    /** активно, только если активны слои и проектов и и зон */
     projectsInActiveIndustrialsOnly = true
     map.geoObjects.removeAll()
     $('.filter_preview[data-type="zones"]').hide()
@@ -1865,19 +1868,29 @@ function totalSummRecount(download = false) {
 }
 
 function filtrate(elem) {
+    // неизвестный фильтр 1
     if (elem.o == 100) return false
+
+    // неизвестный фильтр 2
     if (isGuest) return true
 
     let result
     let isOk = true
 
+    // Перевод в десятичную систему.
     elem.id = parseInt(elem.id, 10)
 
+    // Если этот проект является целью Поиска, его не надо фильтровать
     if (get_project_id && get_project_id == elem.id) return true
 
+    // Если для просмотра выбраны проекты определенных Папок и данный проект входит в одну из выбранных Папок
+    // И включен оежим отображения "Проекты из выбранных папок > `Отображать`"
+    // To засчитываем в общее количество отфильтрованных проектов +1
     if (selectedFoldersProjects.length && !excludeFolders && selectedFoldersProjects.includes(elem.id)) totalFilteredProjects++
 
+    // Если с бэкенда попросили открыть определенные проекты и этот из их числа, то этот проект надо отобразить.
     if (projects_to_map && projects_to_map.length > 0) result = projects_to_map.includes(+elem.id)
+    // есть поиск по проектам поьлзователя. Если этот проект - один из полученых в результате поиска, то его не фильтруем
     else if (projectsProductSearch.length > 0) result = projectsProductSearch.includes(+elem.id)
     else {
         let isSectorOk = false
@@ -1888,6 +1901,7 @@ function filtrate(elem) {
         let isGosOk = false
         let isCostOk = false
         let isCountryOk = false
+        /** @deprecated */
         let isInsustrialOk = !projectsInActiveIndustrialsOnly
         let isFoldersOk = false
         let isSeenOk = true
@@ -1906,23 +1920,41 @@ function filtrate(elem) {
             isOk = isFoldersOk
         }
 
+        // стадия проекта в списке выбранных стадий
         isStageOk = !!selected_stage.find((stage) => { return +stage == +elem.t })
 
+        // Если стадия проекта не входит в список выбранных стадий,
+        // И выбраны подстадии Строительства при том что тама стадия Строительства не выбрана
+        // И проект входит в список выбранных подстадий Строительства
+        // То проект не фильтруем
         if (isOk && !isStageOk) {
-            if (+elem.t == 4 && !selected_stage.includes(4) && selected_stage.some(r => [13, 14, 15, 16, 18, 19].includes(+r)) && selected_stage.includes(+elem.u)) {
+            if (
+                // если проект в стадии строительства
+                +elem.t == 4
+                // и стадия строительства не выбрана
+                && !selected_stage.includes(4)
+                // и выбрана любая из стадий: "13 Нулевой цикл"/"14 Возведение здания"/"15 Внутренние и инженерные работы"/"16 Отделочные работы"/"18 Реконструкция"/"19 Пусконаладка оборудования"
+                && selected_stage.some(r => [13, 14, 15, 16, 18, 19].includes(+r))
+                // И объект в одной из подстадий строительства
+                && selected_stage.includes(+elem.u)
+            ) {
                 isStageOk = true
                 isOk = true
-            } else {
-                isOk = false
-            }
+            } else isOk = false
         }
 
+        // Если Тип Работ проекта входит в список выбранных типов работ
+        // То не фильтруем
         if (isOk) {
             isWorkTypeOk = selected_work_type.includes(+elem.wt)
 
             if (!isWorkTypeOk) isOk = false
         }
 
+        // Если выбраны какие-либо подстадии стадии Приостоновлен
+        // И проект входит в выбранные подстадии
+        // И стадия проекта "Приостоновлен"
+        // То не фильтруем проект
         if (isOk && selected_laststage.length) {
             isLastStageOk = !!selected_laststage.find((laststage) => { return +laststage == +elem.l })
 
@@ -1932,7 +1964,9 @@ function filtrate(elem) {
             }
         }
 
-
+        // Если отрасль проекта входит в список выбранных секторов экономики
+        // Или неизвестное свойство входит в список секторов экономики
+        // То не фильтруем проект
         if (isOk) {
             isSectorOk = !!selected_sector.find((sector) => {
                 sector = +sector
@@ -1944,12 +1978,16 @@ function filtrate(elem) {
             if (!isSectorOk) isOk = false
         }
 
+        // Если проект входит в выбранные типы гос-компаний
+        // То не фильтруем проект
         if (isOk) {
             isGosOk = selected_gos.includes(+elem.g)
 
             if (!isGosOk) isOk = false
         }
 
+        // Если инвестиции в проект находятся в диапазоне выбранным пользователем
+        // То не фильтруем проект
         if (isOk) {
             isCostOk = true
 
@@ -1963,28 +2001,39 @@ function filtrate(elem) {
             if (!isCostOk) isOk = false
         }
 
+        // Если это не Россия
+        // То не фильтруем проект
         if (elem.o == 89) isRegionOk = true
+        // Иначе Если проект входит в выбранные регионы РФ
+        // То не фильтруем проект
         else if (isOk) {
             isRegionOk = !!selected_region.find((region) => { return +region == +elem.o })
 
             if (!isRegionOk) isOk = false
         }
 
+        // Если страна проекта входит в список выбранных стран
+        // То не фильтруем проект
         if (isOk) {
             isCountryOk = !!selected_country.find((country) => { return +country == +elem.z })
 
             if (!isCountryOk) isOk = false
         }
 
+        // Если проект прошел предыдущие фильтры
+        // И активны слои проектов и зон одновременно
+        // И проект входит в текущую активную зону
+        // И стадия проекта "Введен в эксплуатацию"
+        // То ФИЛЬТРУЕМ проект
         if (isOk && projectsInActiveIndustrialsOnly) {
             isInsustrialOk = zonesModel.selected.indexOf(+elem.iz) != -1
 
             if (isInsustrialOk && +elem.t == 5) { isOk = false }
         }
 
-        /** isStageOk && isWorkTypeOk && isSectorOk && isRegionOk && isGosOk && isCostOk && isCountryOk && isFoldersOk && isSeenOk */
         result = isOk
 
+        // 
         if (search_projects && search_projects.length > 0) result = search_projects.includes(elem.id)
     }
 

@@ -12,20 +12,8 @@ import { UserInterface } from "./UserInterface/UserInterface.js"
 globalThis.investBrowserAppInitialized = main()
 
 // for testing
-globalThis.investBrowserAppInitialized.then(({
-    user,
-    mapAdapter,
-    mapPromise,
-    userInterface,
-    investBrowser,
-    projectsLoadingManagerPromise
-}) => {
-    globalThis.user = user
-    globalThis.mapAdapter = mapAdapter
-    globalThis.mapPromise = mapPromise
-    globalThis.userInterface = userInterface
-    globalThis.investBrowser = investBrowser
-    globalThis.projectsLoadingManagerPromise = projectsLoadingManagerPromise
+globalThis.investBrowserAppInitialized.then((instances) => {
+    for (const instanceKey in instances) globalThis[instanceKey] = instances[instanceKey]
 })
 
 /** Функция предоставляет возможность прописать последовательность инициализыции этого модуля и зависимых */
@@ -50,7 +38,9 @@ async function main() {
     /** Основной компонент, управляет UserInterface, и YandexMapAdapter */
     const investBrowser = new Browser(mapAdapter, userInterface, user)
 
+    // "/ymap/load-projects?bounds=%b"
     const loadingProjectsManager = new LoadingProjectsManager()
+    // "/ymap/load-project-groups?bounds=%b"
     const loadingGroupsManager = new LoadingGroupsManager()
 
     investBrowser.browseObjectsFromObjectManager(loadingProjectsManager)
@@ -59,7 +49,6 @@ async function main() {
     return {
         user,
         mapAdapter,
-        mapPromise: mapAdapter._yandexMap,
         userInterface,
         investBrowser,
         loadingProjectsManager,

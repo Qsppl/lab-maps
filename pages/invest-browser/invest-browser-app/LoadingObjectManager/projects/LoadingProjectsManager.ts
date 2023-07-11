@@ -68,6 +68,10 @@ export class LoadingProjectsManager extends ClustererLoadingObjectManager implem
 
     constructor(urlTemplate: string = "/pages/invest-browser/ambiance/jsonp-projects.js") {
         super(urlTemplate)
+        this._loadingManager.then(loadingManager => loadingManager.objects.events.add("add", (event: ymaps.IEvent<MouseEvent>) => {
+            const targetObject = event.get("child")
+            targetObject && this.onLoadProject(targetObject)
+        }))
     }
 
     protected objectIsFolderItem(feathure: ymaps.geometry.json.IFeatureJson<any, any, any>) {
@@ -87,4 +91,6 @@ export class LoadingProjectsManager extends ClustererLoadingObjectManager implem
         const loadingManager = await this._loadingManager
         return new ProjectPlacemarksDecorator(loadingManager.objects)
     }
+
+    public onLoadProject: (feathure: ProjectFeathure) => void = () => { }
 }
