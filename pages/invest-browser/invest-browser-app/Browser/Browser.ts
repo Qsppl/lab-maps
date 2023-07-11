@@ -1,11 +1,5 @@
 "use strict"
 
-import { GroupManagerDecorator } from "../UserInterface/LoadingObjectsManagerDecorators/groups/GroupManagerDecorator.js"
-import { ProjectsManagerDecorator } from "../UserInterface/LoadingObjectsManagerDecorators/projects/ProjectManagerDecorator.js"
-import { GroupsManager } from "./LoadingObjectsManager/GroupsManager.js"
-import { ProjectsManager } from "./LoadingObjectsManager/ProjectsManager.js"
-import { GroupsLoadingObjectManager } from "./LoadingObjectsManager/dto/group.js"
-import { ProjectFeathure, ProjectsLoadingObjectManager } from "./LoadingObjectsManager/dto/project.js"
 import { Guest } from "./User/Guest.js"
 import { Registrant } from "./User/Registrant.js"
 import { Subscriber } from "./User/Subscriber.js"
@@ -59,34 +53,32 @@ export class Browser {
         if (restoredMapState.zoom) map.setZoom(restoredMapState.zoom)
     }
 
-    public async addProjects(url: string = "/pages/invest-browser/ambiance/jsonp-projects.js"): Promise<ProjectsLoadingObjectManager> {
-        const loadingManager = await new ProjectsManager(url, ProjectsManagerDecorator.clustererOptionsAsset).loadingManager
+    // public async addProjects(url: string = "/pages/invest-browser/ambiance/jsonp-projects.js"): Promise<ProjectsLoadingObjectManager> {
+    //     const loadingManager = await new ProjectsManager(url, ProjectsManagerDecorator.clustererOptionsAsset).loadingManager
 
-        this._userInterface.addProjectsManager(loadingManager)
+    //     this._userInterface.addProjectsManager(loadingManager)
 
-        loadingManager.objects.events.add('add', (event: ymaps.IEvent<MouseEvent>) => {
-            const targetObject: ProjectFeathure = event.get("child")
-            this.onLoadProject(targetObject)
-            const isFolderItem = this.isProjectInAnyFolder(targetObject)
-            loadingManager.objects.setObjectOptions(targetObject.id, {
-                isFolderItem
-            })
-        })
+    //     loadingManager.objects.events.add('add', (event: ymaps.IEvent<MouseEvent>) => {
+    //         const targetObject: ProjectFeathure = event.get("child")
+    //         this.onLoadProject(targetObject)
+    //         const isFolderItem = this.isProjectInAnyFolder(targetObject)
+    //         loadingManager.objects.setObjectOptions(targetObject.id, { isFolderItem })
+    //     })
 
-        this._map.addProjectsManager(loadingManager)
+    //     this._map.addProjectsManager(loadingManager)
 
-        return loadingManager
-    }
+    //     return loadingManager
+    // }
 
-    public async addGroups(url: string = "/pages/invest-browser/ambiance/jsonp-load-project-groups.js"): Promise<GroupsLoadingObjectManager> {
-        const loadingManager = await new GroupsManager(url, GroupManagerDecorator.clustererOptionsAsset).loadingManager
+    // public async addGroups(url: string = "/pages/invest-browser/ambiance/jsonp-load-project-groups.js"): Promise<GroupsLoadingObjectManager> {
+    //     const loadingManager = await new GroupsManager(url, GroupManagerDecorator.clustererOptionsAsset).loadingManager
 
-        this._userInterface.addGroupsManager(loadingManager)
+    //     this._userInterface.addGroupsManager(loadingManager)
 
-        this._map.addGroupsManager(loadingManager)
+    //     this._map.addGroupsManager(loadingManager)
 
-        return loadingManager
-    }
+    //     return loadingManager
+    // }
 
     private async blockForFreeUserWithRestrictions(user: Guest | Registrant): Promise<void> {
         this.countOfViewedProjects = this.limitOfProjectViews + 1

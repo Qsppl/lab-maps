@@ -1,18 +1,10 @@
 "use strict"
 
-import { GroupFeathure, GroupFeathureOptions } from "../../../Browser/LoadingObjectsManager/dto/group.js"
-import { ISelectableClusterJson, ISelectableClusterJsonOptions } from "../../../Browser/LoadingObjectsManager/dto/object.js"
-import { ObjectOptionsAssetKey, ObjectOptionsModifierKey } from "../selectable/BaseSelectableCollection.js"
-import { SelectableClustersDecorator } from "../selectable/SelectableClustersDecorator.js"
+import { SelectableClusterJson } from "../clusterer/ClustererLoadingObjectManager.js"
+import { ClusterCollectionOptions, SelectableClustersDecorator } from "../clusterer/SelectableClustersDecorator.js"
+import { ObjectOptionsAssetKey, ObjectOptionsModifierKey } from "../clusterer/SelectableCollectionDecorator.js"
 
-type ClusterOptions = ISelectableClusterJsonOptions<ymaps.ClusterPlacemarkOptions>
-type Cluster = ISelectableClusterJson<ymaps.geometry.json.Point, ClusterOptions, {}, GroupFeathure>
-
-type ClusterCollectionOptions = ymaps.objectManager.ClusterCollectionOptions<GroupFeathureOptions, ClusterOptions> & {
-    __proto__?: ClusterCollectionOptions
-}
-
-export class GroupClustersDecorator extends SelectableClustersDecorator {
+export class GroupClustersDecorator extends SelectableClustersDecorator<SelectableClusterJson> {
     protected async getDefaultAsset(): Promise<ClusterCollectionOptions> {
         const Layout = await this._Layout
         return {
@@ -25,7 +17,7 @@ export class GroupClustersDecorator extends SelectableClustersDecorator {
         }
     }
 
-    protected async createAsset(targetObject: Cluster, assetKey: ObjectOptionsAssetKey, modifier: ObjectOptionsModifierKey = "normal"): Promise<ClusterCollectionOptions> {
+    protected async createAsset(targetObject: SelectableClusterJson, assetKey: ObjectOptionsAssetKey, modifier: ObjectOptionsModifierKey = "normal"): Promise<ClusterCollectionOptions> {
         const asset: ClusterCollectionOptions = await this.getDefaultAsset()
 
         if (assetKey === "default") {

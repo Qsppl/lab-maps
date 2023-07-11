@@ -1,37 +1,30 @@
 "use strict"
 
-import { ISelectableClusterJson, ISelectableClusterJsonOptions, ISelectableFeathureJson, ISelectableFeathureJsonOptions } from "../../../Browser/LoadingObjectsManager/dto/object.js"
-import { ObjectOptionsAssetKey, ObjectOptionsModifierKey, BaseSelectableCollection } from "./BaseSelectableCollection.js"
+import { SelectableClusterJson, SelectableClusterJsonOptions, SelectableObjectJsonOptions, SelectablePlacemarkJson } from "./ClustererLoadingObjectManager.js"
+import { ObjectOptionsAssetKey, ObjectOptionsModifierKey, SelectableCollectionDecorator } from "./SelectableCollectionDecorator.js"
 
 const ymaps = globalThis.ymaps
 
 type ClusterLayout = ymaps.IClassConstructor<ymaps.layout.templateBased.Base>
 
-type ChildFeathureOptions = ISelectableFeathureJsonOptions<{}>
-type ChildFeathure = ISelectableFeathureJson<any, ChildFeathureOptions, any>
-
-type ClusterOptions = ISelectableClusterJsonOptions<ymaps.ClusterPlacemarkOptions>
-type Cluster = ISelectableClusterJson<ymaps.geometry.json.Point, ClusterOptions, {}, ChildFeathure>
-
-type ClusterCollectionOptions = ymaps.objectManager.ClusterCollectionOptions<ChildFeathureOptions, ClusterOptions> & {
-    __proto__?: ClusterCollectionOptions
-}
-type ClusterCollection = ymaps.objectManager.ClusterCollection<
-    ChildFeathureOptions,
-    ChildFeathure,
-    ymaps.LoadingObjectManager<any, any, any, any>,
-
-    ClusterOptions,
-    Cluster
+export type ClusterCollectionOptions = ymaps.objectManager.ClusterCollectionOptions<
+    SelectableObjectJsonOptions,
+    SelectableClusterJsonOptions
+>
+type ClusterCollection<
+    TCluster extends SelectableClusterJson
+> = ymaps.objectManager.ClusterCollection<
+    SelectableObjectJsonOptions,
+    any,
+    any,
+    SelectableClusterJsonOptions,
+    TCluster
 >
 
-/** Это декоратор коллекции кластеров класса LoadingObjectsManager - у него кластеры могут быть только Placemark'ами. Содержимое кластеров - любое. */
-export class SelectableClustersDecorator extends BaseSelectableCollection<
-    ClusterOptions,
-    Cluster,
-    ClusterCollectionOptions,
-    ClusterCollection
-> {
+export class SelectableClustersDecorator<
+    TCluster extends SelectableClusterJson = SelectableClusterJson,
+    TClusterCollection extends ClusterCollection<TCluster> = ClusterCollection<TCluster>
+> extends SelectableCollectionDecorator<SelectableClusterJson, TClusterCollection> {
     protected readonly _Layout: Promise<ClusterLayout>
 
     protected readonly _LayoutHover: Promise<ClusterLayout>
@@ -70,7 +63,7 @@ export class SelectableClustersDecorator extends BaseSelectableCollection<
         }
     }
 
-    constructor(collection: ClusterCollection) {
+    constructor(collection: TClusterCollection) {
         super(collection)
 
         this._Layout = this.getLayout()
@@ -84,20 +77,20 @@ export class SelectableClustersDecorator extends BaseSelectableCollection<
     }
 
     /** Восстанавливает актуальный набор опций объекта */
-    protected resetObjectOptionsAsset(targetObject: Cluster, modifier: ObjectOptionsModifierKey = "normal") {
+    protected resetObjectOptionsAsset(targetObject: TCluster, modifier: ObjectOptionsModifierKey = "normal") {
         const someChildsIsSelected = targetObject.properties.geoObjects.some((feathure) => feathure.options.isSelected)
         if (!!targetObject.options.isSelected || someChildsIsSelected) this.setObjectOptionsAsset(targetObject, "select", modifier)
         else this.resetUnselectedObjectOptionsAsset(targetObject, modifier)
     }
 
     /** Восстанавливает актуальный набор опций объекта не являющийся "select" */
-    protected resetUnselectedObjectOptionsAsset(targetObject: Cluster, modifier: ObjectOptionsModifierKey = "normal") {
+    protected resetUnselectedObjectOptionsAsset(targetObject: TCluster, modifier: ObjectOptionsModifierKey = "normal") {
         const allChildsIsVisited = targetObject.properties.geoObjects.every((feathure) => feathure.options.isVisited)
         if (!!targetObject.options.isVisited || allChildsIsVisited) this.setObjectOptionsAsset(targetObject, "visited", modifier)
         else this.setObjectOptionsAsset(targetObject, "default", modifier)
     }
 
-    protected async createAsset(targetObject: Cluster, assetKey: ObjectOptionsAssetKey, modifier: ObjectOptionsModifierKey = "normal"): Promise<ClusterCollectionOptions> {
+    protected async createAsset(targetObject: TCluster, assetKey: ObjectOptionsAssetKey, modifier: ObjectOptionsModifierKey = "normal"): Promise<ClusterCollectionOptions> {
         const asset: ClusterCollectionOptions = await this.getDefaultAsset()
 
         if (assetKey === "default") {
@@ -119,5 +112,19 @@ export class SelectableClustersDecorator extends BaseSelectableCollection<
         }
 
         return asset
+    }
+
+    /** дизайн меток по умолчанию */
+    protected async setDefaultPlacemarksOptions(): Promise<void> {
+        const defaultAsset = await this.getDefaultAsset()
+        this._collection.options.set(defaultAsset)
+    }
+
+    protected getSelectedObjects(): TCluster[] {
+        return this._collection.getAll().filter(feathure => !!feathure.options.isSelected)
+    }
+
+    protected setObjectOptions(targetObject: TCluster, optionsAsset: ClusterCollectionOptions) {
+        this._collection.setClusterOptions(targetObject.id, optionsAsset)
     }
 }
