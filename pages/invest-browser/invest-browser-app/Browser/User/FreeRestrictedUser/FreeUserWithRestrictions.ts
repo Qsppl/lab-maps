@@ -24,7 +24,7 @@ export abstract class FreeUserWithRestrictions extends BaseUser implements IFree
         return this._isSpentDailyLimit
     }
 
-    setIsSpentDailyLimit(value: boolean) {
+    set isSpentDailyLimit(value: boolean) {
         if (value) this._isSpentDailyLimit = Promise.resolve(true)
         else this._isSpentDailyLimit = Promise.resolve(false)
     }

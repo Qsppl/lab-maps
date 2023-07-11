@@ -1,5 +1,7 @@
 "use strict"
 
+import { IObjectManager } from "../../Browser/interfaces/IObjectManager.js"
+import { IUserFocusEmmiter } from "../../UserInterface/interfaces/IUserFocusEmmiter.js"
 import { SelectableClustersDecorator } from "./SelectableClustersDecorator.js"
 import { SelectablePlacemarksDecorator } from "./SelectablePlacemarksDecorator.js"
 
@@ -47,60 +49,49 @@ export type LoadingObjectManager = ymaps.LoadingObjectManager<
 >
 
 
-export class ClustererLoadingObjectManager {
-    // ##################################
-    // base functionality
-
-    protected readonly _loadingManager: Promise<LoadingObjectManager>
-
-    constructor(urlTemplate: string) {
-        // ##################################
-        // base functionality
-
-        this._loadingManager = this.createLoadingManager(urlTemplate)
-
-
-        // ##################################
-        // decorate functionality
-
-        this.decorate()
-    }
-
-    protected async createLoadingManager(urlTemplate: string): Promise<LoadingObjectManager> {
-        await ymaps.ready()
-
-
-        // ##################################
-        // decorate functionality
-
-        return new ymaps.LoadingObjectManager(urlTemplate, this.clustererOptionsAsset)
-    }
-
-
-    // ##################################
-    // decorate functionality
-
+export class ClustererLoadingObjectManager implements IObjectManager, IUserFocusEmmiter {
     protected readonly clustererOptionsAsset: ProjectsLoadingObjectManagerOptions = {
         clusterize: true,
         gridSize: 36,
         clusterDisableClickZoom: true
     }
 
-    protected async decorate() {
-        const loadingManager = await this._loadingManager
-        const placemarksDecorator = new SelectablePlacemarksDecorator(loadingManager.objects)
-        const clustersDecorator = new SelectableClustersDecorator(loadingManager.clusters)
-        this.syncObjectCollections(placemarksDecorator, clustersDecorator)
+    public readonly _loadingManager: Promise<LoadingObjectManager>
+
+    protected readonly _placemarksDecorator: Promise<SelectablePlacemarksDecorator>
+
+    protected readonly _clustersDecorator: Promise<SelectableClustersDecorator>
+
+    constructor(urlTemplate: string) {
+        this._loadingManager = ymaps.ready().then(() => new ymaps.LoadingObjectManager(urlTemplate, this.clustererOptionsAsset))
+
+        this._placemarksDecorator = this._loadingManager.then(loadingManager => new SelectablePlacemarksDecorator(loadingManager.objects))
+        this._clustersDecorator = this._loadingManager.then(loadingManager => new SelectableClustersDecorator(loadingManager.clusters))
+
+        Promise.all([this._placemarksDecorator, this._clustersDecorator])
+            .then(([placemarksDecorator, clustersDecorator]) => this.syncObjectCollections(placemarksDecorator, clustersDecorator))
     }
+
+    public onFocus: () => {}
+
+    public async defocus() {
+        const [placemarksDecorator, clustersDecorator] = await Promise.all([this._placemarksDecorator, this._clustersDecorator])
+        placemarksDecorator.unselectAll()
+        clustersDecorator.unselectAll()
+    }
+
 
     protected syncObjectCollections(placemarksDecorator: SelectablePlacemarksDecorator, clustersDecorator: SelectableClustersDecorator) {
         placemarksDecorator.selectSingleObjectHook = (placemark) => {
             clustersDecorator.unselectAll()
+            this.onFocus()
+
             return true
         }
 
         clustersDecorator.selectSingleObjectHook = (cluster) => {
             placemarksDecorator.unselectAll()
+            this.onFocus()
 
             // select всех проектов в кластере
             cluster.properties.geoObjects.map(placemark => placemarksDecorator.selectObject(placemark))

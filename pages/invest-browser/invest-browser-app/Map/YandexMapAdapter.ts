@@ -15,7 +15,7 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
     private readonly zoom = 7
 
     private readonly zoomRange = { minZoom: 4, maxZoom: 18 }
-    
+
 
     private readonly controls: (ymaps.IControl | ymaps.ControlKey)[] = ['rulerControl']
 
@@ -23,22 +23,22 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
 
 
     private _onZoomInBoundsing?: CallableFunction
-    
+
     private _onZoomOutBoundsing?: CallableFunction
 
 
     public readonly _yandexMap: Promise<ymaps.Map>
 
-    
+
     constructor(containerElement: HTMLElement | string) {
         const { center, zoom } = this
         const { minZoom, maxZoom } = this.zoomRange
 
-        if (typeof containerElement === "string") {
-            this._yandexMap = app.querySelectorPromise(containerElement).then(element => {
-                return this._createMapInstance(element, { controls: [], center, zoom }, { minZoom, maxZoom })
-            })
-        } else this._yandexMap = this._createMapInstance(containerElement, { controls: [], center, zoom }, { minZoom, maxZoom })
+        const containerElementPromise = typeof containerElement === "string" ? app.querySelectorPromise(containerElement) : Promise.resolve(containerElement)
+        this._yandexMap = containerElementPromise.then(async (element) => {
+            await ymaps.ready()
+            return new ymaps.Map(element, { controls: [], center, zoom }, { minZoom, maxZoom })
+        })
 
         this._yandexMap.then(map => {
             this.controls.push(new ymaps.control.SearchControl(this.searchControlParameters))
@@ -90,14 +90,9 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
         (await this._yandexMap).options.set({ minZoom, maxZoom })
     }
 
-    public async addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
+    public async addObjectsManager(objectManager: ymaps.LoadingObjectManager<any, any, any, any> | ymaps.ObjectManager<any, any, any>) {
         const map = await this._yandexMap
-        map.geoObjects.add(loadingManager)
-    }
-
-    public async addGroupsManager(loadingManager: GroupsLoadingObjectManager) {
-        const map = await this._yandexMap
-        map.geoObjects.add(loadingManager)
+        map.geoObjects.add(objectManager)
     }
 
     /** Обработчик выхода за пределы масштабирования карты. Сообщает пользователю о блокировке масштабирования, если она сработала. */
@@ -131,11 +126,5 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
     public set onZoomOutBoundsing(callback: CallableFunction) {
         if (this._onZoomOutBoundsing) throw new Error("")
         this._onZoomOutBoundsing = callback
-    }
-
-    /** Обертка для типизации и асинхронности. */
-    private async _createMapInstance(containerElement: HTMLElement, state: ymaps.IMapState, options: IMapOptions): Promise<ymaps.Map> {
-        await ymaps.ready()
-        return new ymaps.Map(containerElement, state, options)
     }
 }

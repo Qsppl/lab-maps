@@ -4,6 +4,7 @@ import { IUserInterface, ZoomRestrictionPresetKeys } from "../Browser/interfaces
 import { ModalRestrictionNotice } from "./ModalRestrictionNotice.js"
 import { IMap } from "./interfaces/IMap.js"
 import { IPlace } from "./interfaces/IPlace.js"
+import { IUserFocusEmmiter } from "./interfaces/IUserFocusEmmiter.js"
 
 type ZoomRestrictionPresetData = { baseZoom?: number, zoomInLimit: number, zoomInMessageKey: string, zoomOutLimit: number, zoomOutMessageKey: string }
 
@@ -38,6 +39,8 @@ export class UserInterface implements IUserInterface {
     /** Модальное окно уведомляющее пользователя о том что у него есть какое-либо ограничение использования приложения */
     private readonly _modalRestrictionNotice: Promise<ModalRestrictionNotice>
 
+    private readonly focusEmmiters: Set<IUserFocusEmmiter> = new Set()
+
     private _zoomInMessage: string
 
     private _zoomOutMessage: string
@@ -59,51 +62,19 @@ export class UserInterface implements IUserInterface {
         this._map.onZoomOutBoundsing = (() => { this.showWarningNotice(this._zoomOutMessage, "map-zoom-boundsing-notions") }).bind(this)
     }
 
-    // public async addProjectsManager(loadingManager: ProjectsLoadingObjectManager) {
-    //     const placemarksDecorator = new ProjectObjectsDecorator(loadingManager.objects)
-    //     this.SelectableCollectionsOfMap.add(placemarksDecorator)
-    //     const clustersDecorator = new SelectableClustersDecorator(loadingManager.clusters)
-    //     this.SelectableCollectionsOfMap.add(clustersDecorator)
+    public deleteFocusEmmiter(emmiter: IUserFocusEmmiter) {
+        this.focusEmmiters.delete(emmiter)
 
-    //     placemarksDecorator.selectSingleObjectHook = (placemark) => {
-    //         const emmiter = placemarksDecorator
-    //         for (const collection of this.SelectableCollectionsOfMap) if (collection !== emmiter) collection.unselectAll()
-    //         return true
-    //     }
+        emmiter.onFocus = () => { }
+    }
 
-    //     clustersDecorator.selectSingleObjectHook = (cluster) => {
-    //         const emmiter = clustersDecorator
-    //         for (const collection of this.SelectableCollectionsOfMap) if (collection !== emmiter) collection.unselectAll()
+    public addFocusEmmiter(emmiter: IUserFocusEmmiter) {
+        this.focusEmmiters.add(emmiter)
 
-    //         // select всех проектов в кластере
-    //         cluster.properties.geoObjects.map(placemark => placemarksDecorator.selectObject(placemark))
-
-    //         return true
-    //     }
-    // }
-
-    // public async addGroupsManager(loadingManager: GroupsLoadingObjectManager): Promise<void> {
-    //     const placemarksDecorator = new GroupObjectsDecorator(loadingManager.objects)
-    //     this.SelectableCollectionsOfMap.add(placemarksDecorator)
-    //     const clustersDecorator = new GroupClustersDecorator(loadingManager.clusters)
-    //     this.SelectableCollectionsOfMap.add(clustersDecorator)
-
-    //     placemarksDecorator.selectSingleObjectHook = (placemark) => {
-    //         const emmiter = placemarksDecorator
-    //         for (const collection of this.SelectableCollectionsOfMap) if (collection !== emmiter) collection.unselectAll()
-    //         return true
-    //     }
-
-    //     clustersDecorator.selectSingleObjectHook = (cluster) => {
-    //         const emmiter = clustersDecorator
-    //         for (const collection of this.SelectableCollectionsOfMap) if (collection !== emmiter) collection.unselectAll()
-
-    //         // select всех проектов в кластере
-    //         cluster.properties.geoObjects.map(placemark => placemarksDecorator.selectObject(placemark))
-
-    //         return true
-    //     }
-    // }
+        emmiter.onFocus = () => {
+            for (const oneOfEmmiters of this.focusEmmiters) if (oneOfEmmiters !== emmiter) oneOfEmmiters.defocus()
+        }
+    }
 
     public setZoomRestriction(presetKey: ZoomRestrictionPresetKeys): void {
         // extracting information from a preset

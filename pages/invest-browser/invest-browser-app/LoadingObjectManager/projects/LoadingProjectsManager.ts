@@ -1,5 +1,6 @@
 "use strict"
 
+import { IFolderItemsManager } from "../../Browser/interfaces/IFolderItemsManager.js"
 import { ClustererLoadingObjectManager, SelectableClusterJson, SelectableClusterJsonOptions, SelectableObjectJsonOptions, SelectablePlacemarkJson } from "../clusterer/ClustererLoadingObjectManager.js"
 import { SelectableClustersDecorator } from "../clusterer/SelectableClustersDecorator.js"
 import { ProjectPlacemarksDecorator } from "./ProjectPlacemarksDecorator.js"
@@ -49,7 +50,35 @@ type LoadingObjectManager = ymaps.LoadingObjectManager<
     SelectableClusterJson<ProjectFeathure>
 >
 
-export class LoadingProjectsManager extends ClustererLoadingObjectManager {
+export class LoadingProjectsManager extends ClustererLoadingObjectManager implements IFolderItemsManager {
+    public readonly hasFolderItems: true
+
+    public readonly _loadingManager: Promise<LoadingObjectManager>
+
+    protected _checkIsFolderItemHook
+
+    public set checkIsFolderItemHook(f: (feathure: ymaps.geometry.json.IFeatureJson<any, any, any>) => boolean) {
+        this._checkIsFolderItemHook = f
+        this.actualizeFeathures()
+    }
+
+    public get checkIsFolderItemHook() {
+        return this._checkIsFolderItemHook
+    }
+
+    protected objectIsFolderItem(feathure: ymaps.geometry.json.IFeatureJson<any, any, any>) {
+        if (this._checkIsFolderItemHook) return this._checkIsFolderItemHook(feathure)
+        return false
+    }
+
+    private async actualizeFeathures() {
+        const loadingManager = await this._loadingManager
+
+        loadingManager.objects.getAll().map(feathure => {
+            loadingManager.objects.setObjectOptions(feathure.id, { isFolderItem: this.objectIsFolderItem(feathure) })
+        })
+    }
+
     protected async decorate() {
         const loadingManager = await this._loadingManager
         const placemarksDecorator = new ProjectPlacemarksDecorator(loadingManager.objects)

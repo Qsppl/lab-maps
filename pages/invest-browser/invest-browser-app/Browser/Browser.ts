@@ -1,10 +1,15 @@
 "use strict"
 
+import { IUserFocusEmmiter } from "../UserInterface/interfaces/IUserFocusEmmiter.js"
 import { Guest } from "./User/Guest.js"
 import { Registrant } from "./User/Registrant.js"
 import { Subscriber } from "./User/Subscriber.js"
+import { IFolderItemsManager } from "./interfaces/IFolderItemsManager.js"
 import { IMap } from "./interfaces/IMap.js"
+import { IObjectManager } from "./interfaces/IObjectManager.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"
+
+type ObjectManager = IObjectManager & IUserFocusEmmiter
 
 /**
  * `Браузер Данных` Сайта Investprojects. Взаимодействует с `Пользовательским Интерфейсом` и `Картой`
@@ -21,15 +26,13 @@ export class Browser {
     /** ограничение просмотров проектов для незарегистрированных пользователей */
     private readonly limitOfProjectViews = 10;
 
+    private readonly _map: IMap
 
-    private _map: IMap
+    private readonly _userInterface: IUserInterface
 
-    private _userInterface: IUserInterface
+    private readonly _user: Guest | Registrant | Subscriber
 
-    private _user: Guest | Registrant | Subscriber
-
-
-    public onLoadProject: (projectFeathure: ProjectFeathure) => void = () => { }
+    private readonly _browsedObjectManagers: Set<IObjectManager> = new Set()
 
     public get countOfViewedProjects(): number {
         return +localStorage.getItem('gsp')
@@ -53,32 +56,25 @@ export class Browser {
         if (restoredMapState.zoom) map.setZoom(restoredMapState.zoom)
     }
 
-    // public async addProjects(url: string = "/pages/invest-browser/ambiance/jsonp-projects.js"): Promise<ProjectsLoadingObjectManager> {
-    //     const loadingManager = await new ProjectsManager(url, ProjectsManagerDecorator.clustererOptionsAsset).loadingManager
+    public async browseObjectsFromObjectManager(manager: ObjectManager | ObjectManager & IFolderItemsManager) {
+        if (this._browsedObjectManagers.has(manager)) return
 
-    //     this._userInterface.addProjectsManager(loadingManager)
+        this._browsedObjectManagers.add(manager)
+        // manager implements IFolderItemsManager?
+        if ("hasFolderItems" in manager && manager.hasFolderItems) {
+            // hook is not set?
+            if (!manager.checkIsFolderItemHook) manager.checkIsFolderItemHook = this.isProjectInAnyFolder.bind(this)
+        }
 
-    //     loadingManager.objects.events.add('add', (event: ymaps.IEvent<MouseEvent>) => {
-    //         const targetObject: ProjectFeathure = event.get("child")
-    //         this.onLoadProject(targetObject)
-    //         const isFolderItem = this.isProjectInAnyFolder(targetObject)
-    //         loadingManager.objects.setObjectOptions(targetObject.id, { isFolderItem })
-    //     })
+        this._userInterface.addFocusEmmiter(manager)
+        this._map.addObjectsManager(await manager._loadingManager)
+    }
 
-    //     this._map.addProjectsManager(loadingManager)
+    public cancelBrowseObjectsFromObjectManager(manager: IObjectManager) {
+        if (!this._browsedObjectManagers.has(manager)) return
 
-    //     return loadingManager
-    // }
-
-    // public async addGroups(url: string = "/pages/invest-browser/ambiance/jsonp-load-project-groups.js"): Promise<GroupsLoadingObjectManager> {
-    //     const loadingManager = await new GroupsManager(url, GroupManagerDecorator.clustererOptionsAsset).loadingManager
-
-    //     this._userInterface.addGroupsManager(loadingManager)
-
-    //     this._map.addGroupsManager(loadingManager)
-
-    //     return loadingManager
-    // }
+        this._browsedObjectManagers.delete(manager)
+    }
 
     private async blockForFreeUserWithRestrictions(user: Guest | Registrant): Promise<void> {
         this.countOfViewedProjects = this.limitOfProjectViews + 1
@@ -87,14 +83,14 @@ export class Browser {
         $('#no-access-guest-map').modal({ keyboard: false, backdrop: 'static' })
 
         // если у пользователя указано что он потратил лимит, то все готово
-        if (user.isSpentDailyLimit) return
+        if (await user.isSpentDailyLimit) return
 
         // иначе блокируем пользователя и актуализируем его статус
         const investProjectIdentitiy = await user.investProjectIdentity
         return new Promise((resolve, reject) => {
             $.post('/ajax/ymaps/set-map-block', { fpOurId: investProjectIdentitiy })
                 .done(() => {
-                    user.setIsSpentDailyLimit(true)
+                    user.isSpentDailyLimit = true
                     resolve()
                 })
                 .fail(function () {
@@ -145,7 +141,7 @@ export class Browser {
         return state // <<< three || four || (three & five) || (four & five)
     }
 
-    private isProjectInAnyFolder(targetObject: ProjectFeathure): boolean {
+    private isProjectInAnyFolder(targetObject: ymaps.geometry.json.IFeatureJson<any, any, any>): boolean {
         if (!globalThis._folders) return false
         return globalThis._folders.some(folder => folder.projects.includes(+targetObject.id))
     }
