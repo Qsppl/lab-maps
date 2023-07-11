@@ -21,10 +21,17 @@ export type GroupFeathure = SelectablePlacemarkJson<SelectableObjectJsonOptions,
 }
 
 export class LoadingGroupsManager extends ClustererLoadingObjectManager {
-    protected async decorate() {
+    constructor(urlTemplate: string = "/pages/invest-browser/ambiance/jsonp-load-project-groups.js") {
+        super(urlTemplate)
+    }
+    
+    protected async decoratePlacemarks() {
         const loadingManager = await this._loadingManager
-        const placemarksDecorator = new GroupPlacemarksDecorator(loadingManager.objects)
-        const clustersDecorator = new GroupClustersDecorator(loadingManager.clusters)
-        this.syncObjectCollections(placemarksDecorator, clustersDecorator)
+        return new GroupPlacemarksDecorator(loadingManager.objects)
+    }
+
+    protected async decorateClusters() {
+        const loadingManager = await this._loadingManager
+        return new GroupClustersDecorator(loadingManager.clusters)
     }
 }

@@ -114,6 +114,22 @@ export class SelectableClustersDecorator<
         return asset
     }
 
+    protected async setObjectOptionsAsset(targetObject: TCluster, assetKey: ObjectOptionsAssetKey, modifier: ObjectOptionsModifierKey = "normal") {
+        const asset = await this.createAsset(targetObject, assetKey, modifier)
+
+        // [select > !select] => update Object isSelected state
+        if (assetKey !== "select") asset.isSelected = false
+
+        // [any > select] => update Object isSelected
+        if (assetKey === "select") asset.isSelected = true
+
+        // [any > select && childrens is visited] => update Object isVisited
+        const allChildsIsVisited = targetObject.properties.geoObjects.every((feathure) => feathure.options.isVisited)
+        if (assetKey === "select" && allChildsIsVisited) asset.isVisited = true
+
+        this.setObjectOptions(targetObject, asset)
+    }
+
     /** дизайн меток по умолчанию */
     protected async setDefaultPlacemarksOptions(): Promise<void> {
         const defaultAsset = await this.getDefaultAsset()

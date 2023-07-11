@@ -65,8 +65,8 @@ export class ClustererLoadingObjectManager implements IObjectManager, IUserFocus
     constructor(urlTemplate: string) {
         this._loadingManager = ymaps.ready().then(() => new ymaps.LoadingObjectManager(urlTemplate, this.clustererOptionsAsset))
 
-        this._placemarksDecorator = this._loadingManager.then(loadingManager => new SelectablePlacemarksDecorator(loadingManager.objects))
-        this._clustersDecorator = this._loadingManager.then(loadingManager => new SelectableClustersDecorator(loadingManager.clusters))
+        this._placemarksDecorator = this.decoratePlacemarks()
+        this._clustersDecorator = this.decorateClusters()
 
         Promise.all([this._placemarksDecorator, this._clustersDecorator])
             .then(([placemarksDecorator, clustersDecorator]) => this.syncObjectCollections(placemarksDecorator, clustersDecorator))
@@ -80,6 +80,15 @@ export class ClustererLoadingObjectManager implements IObjectManager, IUserFocus
         clustersDecorator.unselectAll()
     }
 
+    protected async decoratePlacemarks() {
+        const loadingManager = await this._loadingManager
+        return new SelectablePlacemarksDecorator(loadingManager.objects)
+    }
+
+    protected async decorateClusters() {
+        const loadingManager = await this._loadingManager
+        return new SelectableClustersDecorator(loadingManager.clusters)
+    }
 
     protected syncObjectCollections(placemarksDecorator: SelectablePlacemarksDecorator, clustersDecorator: SelectableClustersDecorator) {
         placemarksDecorator.selectSingleObjectHook = (placemark) => {

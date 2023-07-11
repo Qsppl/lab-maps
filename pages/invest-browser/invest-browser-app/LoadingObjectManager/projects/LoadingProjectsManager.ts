@@ -66,6 +66,10 @@ export class LoadingProjectsManager extends ClustererLoadingObjectManager implem
         return this._checkIsFolderItemHook
     }
 
+    constructor(urlTemplate: string = "/pages/invest-browser/ambiance/jsonp-projects.js") {
+        super(urlTemplate)
+    }
+
     protected objectIsFolderItem(feathure: ymaps.geometry.json.IFeatureJson<any, any, any>) {
         if (this._checkIsFolderItemHook) return this._checkIsFolderItemHook(feathure)
         return false
@@ -79,10 +83,8 @@ export class LoadingProjectsManager extends ClustererLoadingObjectManager implem
         })
     }
 
-    protected async decorate() {
+    protected async decoratePlacemarks() {
         const loadingManager = await this._loadingManager
-        const placemarksDecorator = new ProjectPlacemarksDecorator(loadingManager.objects)
-        const clustersDecorator = new SelectableClustersDecorator(loadingManager.clusters)
-        this.syncObjectCollections(placemarksDecorator, clustersDecorator)
+        return new ProjectPlacemarksDecorator(loadingManager.objects)
     }
 }

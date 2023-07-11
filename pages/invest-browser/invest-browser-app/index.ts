@@ -4,6 +4,8 @@ import { Browser } from "./Browser/Browser.js"
 import { Guest } from "./Browser/User/Guest.js"
 import { Registrant } from "./Browser/User/Registrant.js"
 import { Subscriber } from "./Browser/User/Subscriber.js"
+import { LoadingGroupsManager } from "./LoadingObjectManager/groups/LoadingGroupsManager.js"
+import { LoadingProjectsManager } from "./LoadingObjectManager/projects/LoadingProjectsManager.js"
 import { YandexMapAdapter } from "./Map/YandexMapAdapter.js"
 import { UserInterface } from "./UserInterface/UserInterface.js"
 
@@ -48,8 +50,11 @@ async function main() {
     /** Основной компонент, управляет UserInterface, и YandexMapAdapter */
     const investBrowser = new Browser(mapAdapter, userInterface, user)
 
-    const projectsLoadingManager = investBrowser.addProjects()
-    const groupsLoadingManager = investBrowser.addGroups()
+    const loadingProjectsManager = new LoadingProjectsManager()
+    const loadingGroupsManager = new LoadingGroupsManager()
+
+    investBrowser.browseObjectsFromObjectManager(loadingProjectsManager)
+    investBrowser.browseObjectsFromObjectManager(loadingGroupsManager)
 
     return {
         user,
@@ -57,7 +62,8 @@ async function main() {
         mapPromise: mapAdapter._yandexMap,
         userInterface,
         investBrowser,
-        projectsLoadingManagerPromise: projectsLoadingManager
+        loadingProjectsManager,
+        loadingGroupsManager
     }
 }
 
