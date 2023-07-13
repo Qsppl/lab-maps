@@ -5,3 +5,4 @@ node_modules/*
 
 # exclude compiled files
 *.js
+dist

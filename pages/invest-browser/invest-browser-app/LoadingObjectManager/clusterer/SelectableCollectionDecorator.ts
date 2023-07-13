@@ -1,5 +1,7 @@
 "use strict"
 
+import { IUserFocusEmmiter } from "../../UserInterface/interfaces/IUserFocusEmmiter.js"
+
 export type ObjectOptionsAssetKey = "default" | "select" | "visited"
 export type ObjectOptionsModifierKey = "normal" | "hover"
 
@@ -8,10 +10,12 @@ export abstract class SelectableCollectionDecorator<
         options: { isVisited?: boolean | undefined, isSelected?: boolean | undefined }
     },
     Collection extends ymaps.objectManager.ClusterCollection<any, any, any, any, any> | ymaps.objectManager.ObjectCollection<any, any, any>
-> {
-    public readonly ready: Promise<void>
-
+> implements IUserFocusEmmiter {
     protected readonly _collection: Collection
+
+    protected readonly _focusListeners: Set<(feathure: Feathure) => Promise<boolean>> = new Set()
+
+    public readonly ready: Promise<void>
 
     constructor(collection: Collection) {
         this._collection = collection
@@ -71,6 +75,29 @@ export abstract class SelectableCollectionDecorator<
         })
     }
 
+    public defocus(): void {
+        for (const feathure of this.getSelectedObjects()) this.resetUnselectedObjectOptionsAsset(feathure)
+    }
+
+    public selectObject(targetObject: Feathure): boolean {
+        if (!!targetObject.options.isSelected) return false
+        this.setObjectOptionsAsset(targetObject, "select")
+        return true
+    }
+
+    public addFocusFistener(f: (feathure: Feathure) => Promise<boolean>): void {
+        this._focusListeners.add(f)
+    }
+    
+    public deleteFocusFistener(f: (feathure: Feathure) => Promise<boolean>): void {
+        this._focusListeners.delete(f)
+    }
+
+    protected async callFocusListeners(feathure: Feathure) {
+        const results = await Promise.all([...this._focusListeners].map(f => f(feathure)))
+        return results.every(result => result)
+    }
+
     protected async getDefaultAsset(): Promise<any> {
         throw new Error("Methood should be implemented!")
     }
@@ -105,28 +132,15 @@ export abstract class SelectableCollectionDecorator<
         throw new Error("Methood should be implemented!")
     }
 
-    /** Хук вызываемый при событии select-single-object. Прерывает обработку события декоратором если хук вернет false */
-    public selectSingleObjectHook: (placemark: Feathure) => boolean = (placemark: Feathure) => true
 
-    public selectObject(targetObject: Feathure): boolean {
-        if (!!targetObject.options.isSelected) return false
-        this.setObjectOptionsAsset(targetObject, "select")
-        return true
-    }
-
-    public unselectAll(): void {
-        for (const placemark of this.getSelectedObjects()) this.resetUnselectedObjectOptionsAsset(placemark)
-    }
-
-
-    protected selectSingleObject(targetObject: Feathure): void {
+    protected async selectSingleObject(targetObject: Feathure): Promise<void> {
         // если хук родителя на это действие вернет false, то прерываем действие
-        if (this.selectSingleObjectHook(targetObject) === false) return
+        if (await this.callFocusListeners(targetObject) === false) return
 
         // переводим все объекты кроме целевого в любое состояние кроме select
-        for (const placemark of this.getSelectedObjects()) {
-            if (placemark === targetObject) continue
-            this.resetUnselectedObjectOptionsAsset(placemark)
+        for (const feathure of this.getSelectedObjects()) {
+            if (feathure === targetObject) continue
+            this.resetUnselectedObjectOptionsAsset(feathure)
         }
 
         // Применить селект если нужно

@@ -14,18 +14,25 @@ export class SelectablePlacemarksDecorator extends SelectableCollectionDecorator
             iconImageSize: [24, 24],
             iconImageOffset: [-12, -12],
             iconImageHref: "https://investprojects.info/web/img/map/icons/svg/few_normal.svg",
-            iconLayout: 'default#image'
+            iconLayout: 'default#image',
+            hasBalloon: false,
+            hasHint: false
         }
     }
 
     constructor(collection: PlacemarkCollection) {
         super(collection)
-
-        collection.options.set({
-            hasBalloon: false,
-            hasHint: false
-        })
     }
+
+    // ###############################
+    // Логика должна быть где-то в более базовом классе, но времени нет
+
+    /** Добавляет свойства или заменяет старые */
+    public updateObjectProperties(targetObject: SelectablePlacemarkJson, properties: {}) {
+        targetObject.properties = {...targetObject.properties, ...properties}
+    }
+
+    // ########
 
     /**
      * Метод должен содержать логику вычисления набора опций по:

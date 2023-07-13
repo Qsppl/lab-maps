@@ -58,11 +58,16 @@ export class ClustererLoadingObjectManager implements IObjectManager, IUserFocus
 
     public readonly _loadingManager: Promise<LoadingObjectManager>
 
+    protected readonly _languageLocale: "ru" | "en"
+
     protected readonly _placemarksDecorator: Promise<SelectablePlacemarksDecorator>
 
     protected readonly _clustersDecorator: Promise<SelectableClustersDecorator>
 
-    constructor(urlTemplate: string) {
+    protected readonly _focusListeners: Set<() => Promise<boolean>> = new Set()
+
+    constructor(urlTemplate: string, languageLocale: "ru" | "en") {
+        this._languageLocale = languageLocale
         this._loadingManager = ymaps.ready().then(() => new ymaps.LoadingObjectManager(urlTemplate, this.clustererOptionsAsset))
 
         this._placemarksDecorator = this.decoratePlacemarks()
@@ -72,12 +77,23 @@ export class ClustererLoadingObjectManager implements IObjectManager, IUserFocus
             .then(([placemarksDecorator, clustersDecorator]) => this.syncObjectCollections(placemarksDecorator, clustersDecorator))
     }
 
-    public onFocus: () => {}
+    public addFocusFistener(f: () => Promise<boolean>): void {
+        this._focusListeners.add(f)
+    }
+    
+    public deleteFocusFistener(f: () => Promise<boolean>): void {
+        this._focusListeners.delete(f)
+    }
 
     public async defocus() {
         const [placemarksDecorator, clustersDecorator] = await Promise.all([this._placemarksDecorator, this._clustersDecorator])
-        placemarksDecorator.unselectAll()
-        clustersDecorator.unselectAll()
+        placemarksDecorator.defocus()
+        clustersDecorator.defocus()
+    }
+
+    protected async callFocusListeners() {
+        const results = await Promise.all([...this._focusListeners].map(f => f()))
+        return results.every(result => result)
     }
 
     protected async decoratePlacemarks() {
@@ -91,20 +107,20 @@ export class ClustererLoadingObjectManager implements IObjectManager, IUserFocus
     }
 
     protected syncObjectCollections(placemarksDecorator: SelectablePlacemarksDecorator, clustersDecorator: SelectableClustersDecorator) {
-        placemarksDecorator.selectSingleObjectHook = (placemark) => {
-            clustersDecorator.unselectAll()
-            this.onFocus()
+        placemarksDecorator.addFocusFistener(async (placemark) => {
+            clustersDecorator.defocus()
+            this.callFocusListeners()
 
             return true
-        }
+        })
 
-        clustersDecorator.selectSingleObjectHook = (cluster) => {
-            placemarksDecorator.unselectAll()
-            this.onFocus()
+        clustersDecorator.addFocusFistener(async (cluster) => {
+            placemarksDecorator.defocus()
+            this.callFocusListeners()
 
             // select всех проектов в кластере
             cluster.properties.geoObjects.map(placemark => placemarksDecorator.selectObject(placemark))
             return true
-        }
+        })
     }
 }

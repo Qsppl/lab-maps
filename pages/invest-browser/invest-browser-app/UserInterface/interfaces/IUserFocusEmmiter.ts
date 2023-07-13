@@ -1,5 +1,7 @@
 export interface IUserFocusEmmiter {
-    onFocus: CallableFunction
+    addFocusFistener(f: () => Promise<boolean>): void
+
+    deleteFocusFistener(f: () => Promise<boolean>): void
 
     defocus(): void
 }

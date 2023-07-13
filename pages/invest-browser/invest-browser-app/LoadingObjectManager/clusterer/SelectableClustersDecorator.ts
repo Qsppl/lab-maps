@@ -9,7 +9,7 @@ type ClusterLayout = ymaps.IClassConstructor<ymaps.layout.templateBased.Base>
 
 export type ClusterCollectionOptions = ymaps.objectManager.ClusterCollectionOptions<
     SelectableObjectJsonOptions,
-    SelectableClusterJsonOptions
+    ymaps.ClusterPlacemarkOptions
 >
 type ClusterCollection<
     TCluster extends SelectableClusterJson
@@ -59,7 +59,9 @@ export class SelectableClustersDecorator<
                 size: [24, 24],
                 offset: [-12, -12]
             }],
-            clusterIconContentLayout: Layout
+            clusterIconContentLayout: Layout,
+            hasBalloon: false,
+            hasHint: false
         }
     }
 
@@ -70,10 +72,10 @@ export class SelectableClustersDecorator<
 
         this._LayoutHover = this.getLayoutHover()
 
-        collection.options.set({
-            hasBalloon: false,
-            hasHint: false
-        })
+        // collection.options.set({ 
+        //     hasBalloon: false,
+        //     hasHint: false
+        // })
     }
 
     /** Восстанавливает актуальный набор опций объекта */

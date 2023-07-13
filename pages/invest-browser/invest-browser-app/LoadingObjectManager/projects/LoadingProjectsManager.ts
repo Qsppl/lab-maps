@@ -11,7 +11,7 @@ type ProjectObjectJsonOptions = { isFolderItem?: boolean | undefined }
 
 type ProjectFeathureProperties = {
     /** какая-то фигня (равно Id проекта) */
-    clusterCaption: number
+    clusterCaption: string
 }
 
 export type ProjectFeathure = SelectablePlacemarkJson<ProjectObjectJsonOptions & SelectableObjectJsonOptions, ProjectFeathureProperties> & {
@@ -66,8 +66,8 @@ export class LoadingProjectsManager extends ClustererLoadingObjectManager implem
         return this._checkIsFolderItemHook
     }
 
-    constructor(urlTemplate: string = "/pages/invest-browser/ambiance/jsonp-projects.js") {
-        super(urlTemplate)
+    constructor(urlTemplate: string, languageLocale: "ru" | "en") {
+        super(urlTemplate, languageLocale)
         this._loadingManager.then(loadingManager => loadingManager.objects.events.add("add", (event: ymaps.IEvent<MouseEvent>) => {
             const targetObject = event.get("child")
             targetObject && this.onLoadProject(targetObject)

@@ -39,7 +39,7 @@ export class UserInterface implements IUserInterface {
     /** Модальное окно уведомляющее пользователя о том что у него есть какое-либо ограничение использования приложения */
     private readonly _modalRestrictionNotice: Promise<ModalRestrictionNotice>
 
-    private readonly focusEmmiters: Set<IUserFocusEmmiter> = new Set()
+    private readonly _focusEmmiterToHandler: Map<IUserFocusEmmiter, () => Promise<boolean>> = new Map()
 
     private _zoomInMessage: string
 
@@ -63,17 +63,28 @@ export class UserInterface implements IUserInterface {
     }
 
     public deleteFocusEmmiter(emmiter: IUserFocusEmmiter) {
-        this.focusEmmiters.delete(emmiter)
+        if (!this._focusEmmiterToHandler.has(emmiter)) {
+            console.warn()
+            return
+        }
 
-        emmiter.onFocus = () => { }
+        emmiter.deleteFocusFistener(this._focusEmmiterToHandler.get(emmiter))
+        this._focusEmmiterToHandler.delete(emmiter)
     }
 
     public addFocusEmmiter(emmiter: IUserFocusEmmiter) {
-        this.focusEmmiters.add(emmiter)
-
-        emmiter.onFocus = () => {
-            for (const oneOfEmmiters of this.focusEmmiters) if (oneOfEmmiters !== emmiter) oneOfEmmiters.defocus()
+        if (this._focusEmmiterToHandler.has(emmiter)) {
+            console.warn()
+            return
         }
+
+        const handler = async () => {
+            for (const emmiter of this._focusEmmiterToHandler.keys()) emmiter.defocus()
+            return true
+        }
+
+        this._focusEmmiterToHandler.set(emmiter, handler)
+        emmiter.addFocusFistener(handler)
     }
 
     public setZoomRestriction(presetKey: ZoomRestrictionPresetKeys): void {

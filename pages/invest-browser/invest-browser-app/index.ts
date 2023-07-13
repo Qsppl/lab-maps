@@ -39,9 +39,9 @@ async function main() {
     const investBrowser = new Browser(mapAdapter, userInterface, user)
 
     // "/ymap/load-projects?bounds=%b"
-    const loadingProjectsManager = new LoadingProjectsManager()
+    const loadingProjectsManager = new LoadingProjectsManager("/pages/invest-browser/ambiance/jsonp-projects.js", user.languageLocale)
     // "/ymap/load-project-groups?bounds=%b"
-    const loadingGroupsManager = new LoadingGroupsManager()
+    const loadingGroupsManager = new LoadingGroupsManager("/pages/invest-browser/ambiance/jsonp-load-project-groups.js", user.languageLocale)
 
     investBrowser.browseObjectsFromObjectManager(loadingProjectsManager)
     investBrowser.browseObjectsFromObjectManager(loadingGroupsManager)
