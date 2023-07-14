@@ -3,8 +3,6 @@
 import { IMap as IBrowserMap } from "../Browser/interfaces/IMap.js"
 import { IMap as IUserInterfaceMap } from "../UserInterface/interfaces/IMap.js"
 import { IPlace as IUserInterfacePlace } from "../UserInterface/interfaces/IPlace.js"
-import { ProjectsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/project.js"
-import { GroupsLoadingObjectManager } from "../Browser/LoadingObjectsManager/dto/group.js"
 
 const ymaps = globalThis.ymaps
 
@@ -18,8 +16,6 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
 
 
     private readonly controls: (ymaps.IControl | ymaps.ControlKey)[] = ['rulerControl']
-
-    private readonly searchControlParameters: ymaps.control.ISearchControlParameters = { options: { provider: 'yandex#search' } }
 
 
     private _onZoomInBoundsing?: CallableFunction
@@ -37,13 +33,17 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
         const containerElementPromise = typeof containerElement === "string" ? app.querySelectorPromise(containerElement) : Promise.resolve(containerElement)
         this._yandexMap = containerElementPromise.then(async (element) => {
             await ymaps.ready()
-            return new ymaps.Map(element, { controls: [], center, zoom }, { minZoom, maxZoom })
-        })
-
-        this._yandexMap.then(map => {
-            this.controls.push(new ymaps.control.SearchControl(this.searchControlParameters))
+            // controls: [] is unsetting all default controls
+            return new ymaps.Map(element, { controls: [], center, zoom }, { minZoom, maxZoom, searchControlProvider: 'yandex#search' })
+        }).then(map => {
+            // add controls
             this.controls.push(new ymaps.control.ZoomControl({ options: { size: 'small', position: { right: 10, top: 200 } } }))
             this.controls.map(control => map.controls.add(control))
+
+            // add listeners
+            map.events.add("wheel", this._callZoomBoundsingHandlers.bind(this))
+            
+            return map
         })
 
         this._yandexMap.then(map => map.events.add("wheel", this._callZoomBoundsingHandlers.bind(this)))
@@ -52,17 +52,15 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
     public async panTo([x, y]: number[], zoom?: number): Promise<void> {
         const map = await this._yandexMap
 
-        if (!zoom) return map.panTo([x, y])
+        if (!zoom) return map.panTo([x, y]).then(() => { map.events.fire('actionend') })
 
         throw new Error("Эта функция еще не реализована")
-
-        // promise.then(() => { map.events.fire('actionend') })
     }
 
     public async setCenter([x, y]: number[], zoom?: number): Promise<void> {
         const map = await this._yandexMap
 
-        if (!zoom) return map.panTo([x, y])
+        if (!zoom) return map.setCenter([x, y]).then(() => { map.events.fire('actionend') })
 
         const [minZoom, maxZoom] = map.zoomRange.getCurrent()
 
@@ -71,8 +69,7 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
 
         return map.setCenter([x, y], zoom, {
             checkZoomRange: true
-        })
-        // promise.then(() => { map.events.fire('actionend') })
+        }).then(() => { map.events.fire('actionend') })
     }
 
     public async setZoom(zoom: number): Promise<void> {

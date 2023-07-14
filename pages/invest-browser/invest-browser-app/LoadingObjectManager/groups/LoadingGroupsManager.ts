@@ -72,10 +72,12 @@ export class LoadingGroupsManager extends ClustererLoadingObjectManager {
 
     protected async updateFeathureBalloon(feathure: GroupFeathure) {
         const placemarksDecorator = await this._placemarksDecorator
+        const rawHtmlButton = `<a class="btn btn-primary" href="/project-groups/${feathure.id}" target="_blank">Открыть</a>`
         const balloonData = {
-            clusterCaption: String(feathure.id),
-            balloonContent: `Описание группы отсутствует<br><br><a class="btn btn-primary" href="/project-groups/${feathure.id}" target="_blank">Открыть</a>`,
-            balloonContentHeader: `(id: ${feathure.id}) Название отсутствует`
+            caption: String(feathure.id),
+            sectorName: "Отрасль не определена",
+            description: `Описание группы отсутствует`,
+            header: `(id: ${feathure.id}) Название отсутствует`
         }
 
         try {
@@ -85,14 +87,25 @@ export class LoadingGroupsManager extends ClustererLoadingObjectManager {
                 ? groupData.name || groupData.name_en
                 : groupData.name_en || groupData.name
     
-            if (groupName) balloonData.clusterCaption = groupName
-            if (groupName) balloonData.balloonContentHeader = groupName
-            if (groupData.description) balloonData.balloonContent = `${groupData.description}<br><br><a class="btn btn-primary" href="/project-groups/${feathure.id}" target="_blank">Открыть</a>`
+            if (groupName) balloonData.caption = groupName
+            if (groupName) balloonData.header = groupName
+
+            const sectorName = this._languageLocale === "ru"
+                ? groupData.sector_name || groupData.sector_name_en
+                : groupData.sector_name_en || groupData.sector_name
+
+            if (sectorName) balloonData.sectorName = sectorName
+
+            if (groupData.description) balloonData.description = groupData.description
         } catch (error) {
             console.warn(error);
         }
 
-        placemarksDecorator.setBalloonData(feathure, balloonData)
+        placemarksDecorator.setBalloonData(feathure, {
+            clusterCaption: balloonData.caption,
+            balloonContentHeader: balloonData.header,
+            balloonContent: [`<b>Сектор:</b> ${balloonData.sectorName}`, balloonData.description, rawHtmlButton].join("<br><br>")
+        })
     }
 
     protected async loadGroupData(feathure: GroupFeathure): Promise<{ name: string, name_en: string, description: string } | JQuery.jqXHR<any>> {

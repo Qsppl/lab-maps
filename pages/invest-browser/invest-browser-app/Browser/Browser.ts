@@ -117,28 +117,34 @@ export class Browser {
     private async initForSubscriber(user: Subscriber) { }
 
     private restoreMapState(): { center?: [number, number], zoom?: number } {
-        // <<< one
-        if (globalThis.projects_to_map && globalThis.projects_to_map.length > 1) return { center: [59.92, 60.3413], zoom: 7 }
+        const state = this.loadMapState()
 
-        // <<< two
-        if (this._user instanceof Guest) return { center: [59.92, 30.3413], zoom: 7 }
+        // if guest, then we skip loading the parameter url
+        if (this._user instanceof Guest) return state
 
-        let state: { center?: [number, number], zoom?: number } = {}
-
-        // three
-        if (globalThis.companyProdAddresses) {
-            const lastUserCompany = globalThis.companyProdAddresses[globalThis.companyProdAddresses.length - 1]
-            state = { center: [lastUserCompany.map_x, lastUserCompany.map_y], zoom: 7 }
-        }
-
-        // four
-        if (app.getUrlParameter('x') && app.getUrlParameter('y')) state = { center: [+app.getUrlParameter('x'), +app.getUrlParameter('y')], zoom: 11 }
-
-        // (three & five) || (four & five)
         if (app.getUrlParameter('center')) state.center = app.getUrlParameter('center').split(',').map((value: string) => +value)
         if (app.getUrlParameter('zoom')) state.zoom = +(app.getUrlParameter('zoom'))
 
-        return state // <<< three || four || (three & five) || (four & five)
+        return state
+    }
+
+    private loadMapState(): { center?: [number, number], zoom?: number } {
+        if (globalThis.projects_to_map && globalThis.projects_to_map.length > 1) {
+            return { center: [59.92, 60.3413] }
+        }
+
+        if (this._user instanceof Guest) return {}
+
+        if (app.getUrlParameter('x') && app.getUrlParameter('y')) {
+            return { center: [+app.getUrlParameter('x'), +app.getUrlParameter('y')], zoom: 11 }
+        }
+
+        if (globalThis.companyProdAddresses) {
+            const lastUserCompany = globalThis.companyProdAddresses[globalThis.companyProdAddresses.length - 1]
+            return { center: [lastUserCompany.map_x, lastUserCompany.map_y] }
+        }
+
+        return {}
     }
 
     private isProjectInAnyFolder(targetObject: ymaps.geometry.json.IFeatureJson<any, any, any>): boolean {
