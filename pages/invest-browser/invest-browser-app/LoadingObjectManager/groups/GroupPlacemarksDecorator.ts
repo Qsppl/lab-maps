@@ -38,7 +38,14 @@ export class GroupPlacemarksDecorator extends SelectablePlacemarksDecorator {
 
         // Родитель мог что-нибудь поменять в данных, поэтому открываем балун даже если он уже был открыт.
         if (targetObject.properties.hasBalloonData) {
-            this._collection.balloon.open(targetObject.id)
+            const balloon = this._collection.balloon
+
+            const closeBalloonHandler = () => {
+                this.defocus()
+                balloon.events.remove("close", closeBalloonHandler)
+            }
+
+            (await balloon.open(targetObject.id)) && balloon.events.add("close", closeBalloonHandler)
         }
 
         // переводим все объекты кроме целевого в любое состояние кроме select
@@ -56,7 +63,7 @@ export class GroupPlacemarksDecorator extends SelectablePlacemarksDecorator {
         return {
             iconImageSize: [24, 24],
             iconImageOffset: [-12, -12],
-            iconImageHref: "resources/few_group_of_projects_normal.svg",
+            iconImageHref: "/web/img/map/icons/svg/few_group_of_projects_normal.svg",
             iconLayout: 'default#image'
         }
     }
@@ -67,9 +74,9 @@ export class GroupPlacemarksDecorator extends SelectablePlacemarksDecorator {
         if (assetKey === "default") {
             // nothing
         } else if (assetKey === "select") {
-            asset.iconImageHref = "resources/few_group_of_projects_active.svg"
+            asset.iconImageHref = "/web/img/map/icons/svg/few_group_of_projects_active.svg"
         } else if (assetKey === "visited") {
-            asset.iconImageHref = "resources/few_group_of_projects_visited.svg"
+            asset.iconImageHref = "/web/img/map/icons/svg/few_group_of_projects_visited.svg"
         } else throw new TypeError("")
 
 

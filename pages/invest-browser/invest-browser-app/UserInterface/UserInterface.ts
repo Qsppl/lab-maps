@@ -78,13 +78,15 @@ export class UserInterface implements IUserInterface {
             return
         }
 
-        const handler = async () => {
-            for (const emmiter of this._focusEmmiterToHandler.keys()) emmiter.defocus()
-            return true
-        }
+        const handler = this.defocus.bind(this)
 
         this._focusEmmiterToHandler.set(emmiter, handler)
         emmiter.addFocusFistener(handler)
+    }
+
+    public async defocus() {
+        for (const emmiter of this._focusEmmiterToHandler.keys()) emmiter.defocus()
+        return true
     }
 
     public setZoomRestriction(presetKey: ZoomRestrictionPresetKeys): void {

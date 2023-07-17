@@ -45,8 +45,6 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
             
             return map
         })
-
-        this._yandexMap.then(map => map.events.add("wheel", this._callZoomBoundsingHandlers.bind(this)))
     }
 
     public async panTo([x, y]: number[], zoom?: number): Promise<void> {

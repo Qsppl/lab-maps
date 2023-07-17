@@ -18,6 +18,7 @@
     "@types/yandex-maps": "^2.1.29",
     "bootstrap": "^4.6.2",
     "jquery": "^3.6.4",
-    "jquery-toast-plugin": "^1.3.2"
+    "jquery-toast-plugin": "^1.3.2",
+    "unlockjs": "^1.1.17"
   }
 }

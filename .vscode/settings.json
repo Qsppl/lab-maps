@@ -7,5 +7,6 @@
     "files.autoSave": "onFocusChange",
     "terminal.integrated.automationProfile.windows": {
         "path": "C:/Windows/System32/cmd.exe"
-    }
+    },
+    "files.eol": "\r\n"
 }

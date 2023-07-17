@@ -26,7 +26,14 @@ export class GroupClustersDecorator extends SelectableClustersDecorator<GroupsCl
 
         // Родитель мог что-нибудь поменять в данных, поэтому открываем балун даже если он уже был открыт.
         if (targetObject.properties.geoObjects.some(feathure => feathure.properties.hasBalloonData)) {
-            this._collection.balloon.open(targetObject.id)
+            const balloon = this._collection.balloon
+
+            const closeBalloonHandler = () => {
+                this.defocus()
+                balloon.events.remove("close", closeBalloonHandler)
+            }
+
+            (await balloon.open(targetObject.id)) && balloon.events.add("close", closeBalloonHandler)
         }
 
         // переводим все объекты кроме целевого в любое состояние кроме select
@@ -45,7 +52,7 @@ export class GroupClustersDecorator extends SelectableClustersDecorator<GroupsCl
         return {
             clusterBalloonPanelMaxMapArea: 0,
             clusterIcons: [{
-                href: "resources/few_cluster_of_group.svg",
+                href: "/web/img/map/icons/svg/few_cluster_of_group.svg",
                 size: [24, 24],
                 offset: [-12, -12]
             }],
@@ -59,11 +66,11 @@ export class GroupClustersDecorator extends SelectableClustersDecorator<GroupsCl
         if (assetKey === "default") {
             // nothing
         } else if (assetKey === "select") {
-            asset.clusterIcons[0].href = "resources/few_group_of_projects_active.svg"
+            asset.clusterIcons[0].href = "/web/img/map/icons/svg/few_group_of_projects_active.svg"
             asset.clusterIcons[0].size = [32, 32]
             asset.clusterIcons[0].offset = [-16, -16]
         } else if (assetKey === "visited") {
-            asset.clusterIcons[0].href = "resources/few_group_of_projects_visited.svg"
+            asset.clusterIcons[0].href = "/web/img/map/icons/svg/few_group_of_projects_visited.svg"
         } else throw new TypeError("")
 
 

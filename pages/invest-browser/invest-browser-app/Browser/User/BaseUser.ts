@@ -11,10 +11,4 @@ export abstract class BaseUser implements IUser {
         console.warn("Элемент <html> ДОЛЖЕН иметь аттрибут lang и валидное значение языка, иначе выбирается язык по умолчанию: 'ru'")
         return 'ru'
     }
-
-    /** Количество просмотренных пользователем проектов */
-    get numberOfViewedProjects(): number {
-        const storedValue = localStorage.getItem('gsp')
-        return storedValue ? +(storedValue) : 0
-    }
 }

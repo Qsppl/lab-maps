@@ -73,7 +73,7 @@ export abstract class FreeUserWithRestrictions extends BaseUser implements IFree
             return +JSON.parse(response).data.userFpId
         }).catch(reason => {
             console.warn(reason)
-            return 0
+            return -1
         })
 
         const isSpentDailyLimit = requestObject.then((response: string | JQuery.jqXHR<any>): boolean => {
@@ -81,7 +81,7 @@ export abstract class FreeUserWithRestrictions extends BaseUser implements IFree
             return !!JSON.parse(response).data.isMapLimited
         }).catch(reason => {
             console.warn(reason)
-            return false
+            return true
         })
 
         return { investProjectIdentity, isSpentDailyLimit }

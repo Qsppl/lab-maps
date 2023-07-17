@@ -1,6 +1,6 @@
 "use strict"
 
-import { ClustererLoadingObjectManager, SelectableClusterJson, SelectableClusterJsonOptions, SelectableObjectJsonOptions, SelectablePlacemarkJson } from "../clusterer/ClustererLoadingObjectManager.js"
+import { ClustererLoadingObjectManager, ProjectsLoadingObjectManagerOptions, SelectableClusterJson, SelectableClusterJsonOptions, SelectableObjectJsonOptions, SelectablePlacemarkJson } from "../clusterer/ClustererLoadingObjectManager.js"
 import { GroupClustersDecorator } from "./GroupClustersDecorator.js"
 import { GroupPlacemarksDecorator } from "./GroupPlacemarksDecorator.js"
 
@@ -43,6 +43,14 @@ type LoadingObjectManager = ymaps.LoadingObjectManager<
 
 export class LoadingGroupsManager extends ClustererLoadingObjectManager {
     public readonly _loadingManager: Promise<LoadingObjectManager>
+
+    protected readonly clustererOptionsAsset: ProjectsLoadingObjectManagerOptions = {
+        clusterize: true,
+        gridSize: 36,
+        clusterDisableClickZoom: true,
+        geoObjectHideIconOnBalloonOpen: false,
+        clusterHideIconOnBalloonOpen: false
+    }
 
     protected readonly _placemarksDecorator: Promise<GroupPlacemarksDecorator>
 
@@ -104,7 +112,7 @@ export class LoadingGroupsManager extends ClustererLoadingObjectManager {
         placemarksDecorator.setBalloonData(feathure, {
             clusterCaption: balloonData.caption,
             balloonContentHeader: balloonData.header,
-            balloonContent: [`<b>Сектор:</b> ${balloonData.sectorName}`, balloonData.description, rawHtmlButton].join("<br><br>")
+            balloonContent: [`<b>Отрасль:</b> ${balloonData.sectorName}`, balloonData.description, rawHtmlButton].join("<br><br>")
         })
     }
 
