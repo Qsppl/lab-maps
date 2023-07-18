@@ -11,6 +11,8 @@ import { UserInterface } from "./UserInterface/UserInterface.js"
 
 globalThis.investBrowserAppInitialized = main()
 
+const ymaps = globalThis.ymaps
+
 // for testing
 globalThis.investBrowserAppInitialized.then((instances) => {
     for (const instanceKey in instances) globalThis[instanceKey] = instances[instanceKey]
@@ -46,13 +48,17 @@ async function main() {
     investBrowser.browseObjectsFromObjectManager(loadingProjectsManager)
     investBrowser.browseObjectsFromObjectManager(loadingGroupsManager)
 
+    await ymaps.ready
+    const myBorders = ymaps.borders.load('RU', { lang: 'ru', quality: 2 })
+
     return {
         user,
         mapAdapter,
         userInterface,
         investBrowser,
         loadingProjectsManager,
-        loadingGroupsManager
+        loadingGroupsManager,
+        myBorders
     }
 }
 
