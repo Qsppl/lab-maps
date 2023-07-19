@@ -1,6 +1,7 @@
 "use strict"
 
 import { IMap as IBrowserMap } from "../Browser/interfaces/IMap.js"
+import { GeoTerritory } from "../GeoTerritory/GeoTerritory.js"
 import { IMap as IUserInterfaceMap } from "../UserInterface/interfaces/IMap.js"
 import { IPlace as IUserInterfacePlace } from "../UserInterface/interfaces/IPlace.js"
 
@@ -42,7 +43,7 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
 
             // add listeners
             map.events.add("wheel", this._callZoomBoundsingHandlers.bind(this))
-            
+
             return map
         })
     }
@@ -85,9 +86,29 @@ export class YandexMapAdapter implements IBrowserMap, IUserInterfacePlace, IUser
         (await this._yandexMap).options.set({ minZoom, maxZoom })
     }
 
+    public async setBounds(bounds: [[number, number], [number, number]]): Promise<void> {
+        return (await this._yandexMap).setBounds(bounds, {
+            checkZoomRange: true,
+            useMapMargin: true
+        })
+    }
+
     public async addObjectsManager(objectManager: ymaps.LoadingObjectManager<any, any, any, any> | ymaps.ObjectManager<any, any, any>) {
         const map = await this._yandexMap
         map.geoObjects.add(objectManager)
+    }
+
+    public async addGeoTerrirory(territory: GeoTerritory): Promise<void> {
+        (await this._yandexMap).geoObjects.add(await territory.geoObject)
+    }
+
+    public async removeGeoTerritory(territory: GeoTerritory): Promise<void> {
+        (await this._yandexMap).geoObjects.remove(await territory.geoObject)
+    }
+
+    async viewTerritories(territories: GeoTerritory[]): Promise<void> {
+        const geoObjects = await Promise.all(territories.map(territory => territory.geoObject))
+        this.setBounds(ymaps.geoQuery(geoObjects).getBounds())
     }
 
     /** Обработчик выхода за пределы масштабирования карты. Сообщает пользователю о блокировке масштабирования, если она сработала. */

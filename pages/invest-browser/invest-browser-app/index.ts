@@ -48,17 +48,13 @@ async function main() {
     investBrowser.browseObjectsFromObjectManager(loadingProjectsManager)
     investBrowser.browseObjectsFromObjectManager(loadingGroupsManager)
 
-    await ymaps.ready
-    const myBorders = ymaps.borders.load('RU', { lang: 'ru', quality: 2 })
-
     return {
         user,
         mapAdapter,
         userInterface,
         investBrowser,
         loadingProjectsManager,
-        loadingGroupsManager,
-        myBorders
+        loadingGroupsManager
     }
 }
 

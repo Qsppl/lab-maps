@@ -2,7 +2,7 @@
 
 import { IUser } from "../interfaces/IUser.js"
 
-type TSypexgeoDTO = {
+export type TSypexgeoDTO = {
     ip: string
     city: TSypexgeoCityDTO
     country: TSypexgeoCountryDTO
@@ -80,6 +80,28 @@ type TSypexgeoCountryDTO = {
 }
 
 export abstract class BaseUser implements IUser {
+    constructor() {
+        // костыль для обратной совместимости. заполняем cookies
+        if (!this.restoreRegion()) this.onceLoadGeoData().then(geoData => {
+            if (geoData && geoData.city.lat && geoData.city.lon) this.storeLocation([geoData.city.lat, geoData.city.lon])
+            else app.setCookie('base_coords1', 'undefined')
+        })
+
+        // костыль для обратной совместимости. заполняем cookies
+        if (!this.restoreRegion()) this.onceLoadGeoData().then(geoData => {
+            if (!geoData || (!geoData.region.name_ru && !geoData.region.name_en)) {
+                app.setCookie('region', 'undefined')
+                return
+            }
+
+            const regionName = this.languageLocale === "ru"
+                ? geoData.region.name_ru || geoData.region.name_en
+                : geoData.region.name_en || geoData.region.name_ru
+
+            this.storeRegion(regionName)
+        })
+    }
+
     /** Текущая языковая локализация страницы */
     public get languageLocale(): 'ru' | 'en' {
         let lang = document.documentElement.lang
@@ -91,13 +113,16 @@ export abstract class BaseUser implements IUser {
 
     public get location(): Promise<[number, number] | false> {
         const restoredLocation = this.restoreLocation()
-        
+
         // return restored value
         if (restoredLocation) return Promise.resolve(restoredLocation)
 
         // or load data
         return this.onceLoadGeoData().then(geoData => {
-            if (!geoData) return false
+            if (!geoData || !geoData.city.lat || !geoData.city.lon) {
+                app.setCookie('base_coords1', 'undefined')
+                return false
+            }
 
             // and store data
             this.storeLocation([geoData.city.lat, geoData.city.lon])
@@ -109,24 +134,45 @@ export abstract class BaseUser implements IUser {
 
     public get region(): Promise<string | false> {
         const restoredLocation = this.restoreRegion()
-        
+
         // return restored value
         if (restoredLocation) return Promise.resolve(restoredLocation)
 
         // or load data
         return this.onceLoadGeoData().then(geoData => {
-            if (!geoData) return false
+            if (!geoData) {
+                this.storeRegion('undefined')
+                return false
+            }
 
             const regionName = this.languageLocale === "ru"
                 ? geoData.region.name_ru || geoData.region.name_en
                 : geoData.region.name_en || geoData.region.name_ru
-            
+
             // and store data
             this.storeRegion(regionName)
 
             // and return loaded value
             return regionName
         })
+    }
+
+    public get countryIso3166(): Promise<string | null> {
+        return this.onceLoadGeoData()
+            .then(result => result ? result.country.iso : null)
+            .catch(reason => {
+                console.warn(reason)
+                return null
+            })
+    }
+
+    public get regionIso3166(): Promise<string | null> {
+        return this.onceLoadGeoData()
+            .then(result => result ? result.region.iso : null)
+            .catch(reason => {
+                console.warn(reason)
+                return null
+            })
     }
 
     protected _geoData: Promise<TSypexgeoDTO | false> | undefined
@@ -154,14 +200,11 @@ export abstract class BaseUser implements IUser {
     }
 
     protected restoreLocation(): [number, number] | false {
-        const cookieValue: string = app.getCookie('base_coords1')
+        if (app.getCookie('base_coords1') === 'undefined') return false
 
-        if (cookieValue) {
-            const [x, y] = cookieValue.split(',')
-            return [+x, +y]
-        }
+        if (!app.getCookie('base_coords1')) return false
 
-        return false
+        return app.getCookie('base_coords1').split(',')
     }
 
     protected storeLocation([x, y]: [x: number, y: number]) {
@@ -169,7 +212,11 @@ export abstract class BaseUser implements IUser {
     }
 
     protected restoreRegion(): string | false {
-        return app.getCookie('region') || false
+        if (app.getCookie('region') === 'undefined') return false
+
+        if (!app.getCookie('region')) return false
+
+        return app.getCookie('region')
     }
 
     protected storeRegion(region: string) {

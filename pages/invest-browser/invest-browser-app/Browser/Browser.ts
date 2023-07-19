@@ -10,16 +10,22 @@ import { Subscriber } from "./User/Subscriber.js"
 import { IFolderItemsManager } from "./interfaces/IFolderItemsManager.js"
 import { IMap } from "./interfaces/IMap.js"
 import { IObjectManager } from "./interfaces/IObjectManager.js"
+import { IUser } from "./interfaces/IUser.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"
 
 type TCountryInfo = {
     id: number
-    iso3166: string
+    code: number
+    iso: string
+    name: string
+    name_en: string
 }
 
-type TCountrySubjectInfo = {
+type TRegionInfo = {
     id: number
-    iso3166: string
+    iso: string
+    name: string
+    name_en: string
 }
 
 /**
@@ -63,15 +69,7 @@ export class Browser {
         localStorage.setItem('IBA-browser-viewedObjects', JSON.stringify(objects))
     }
 
-    private addViewedObject(id: string) {
-        if (this.viewedObjectsDump.includes(id)) return
-
-        const objects = this.viewedObjectsDump
-        objects.push(id)
-        this.viewedObjectsDump = objects
-
-        ++this.countOfViewedRestrictedObjects
-    }
+    private readonly _browsedTerritories: Set<GeoTerritory> = new Set()
 
     public get countOfViewedRestrictedObjects(): number {
         return +localStorage.getItem('gsp')
@@ -91,12 +89,128 @@ export class Browser {
             .map(([UserType, LoaderType]) => LoaderType)
 
         if (user instanceof Guest || user instanceof Registrant) this.initForFreeUserWithRestrictions(user)
-        else if (user instanceof Subscriber) this.initForSubscriber(user)
-        else throw new TypeError("")
 
-        const restoredMapState = this.restoreMapState()
-        if (restoredMapState.center) map.setCenter(restoredMapState.center)
-        if (restoredMapState.zoom) map.setZoom(restoredMapState.zoom)
+        let tusksChain: Promise<any> = Promise.reject()
+
+        const browsedTerritory = this.restoreBrowsedTerritory()
+
+        if (browsedTerritory) {
+            const tusk = tusksChain.catch(async () => {
+                if (await this.browseRegion(browsedTerritory)) return true
+                if (await this.browseCountry(browsedTerritory)) return true
+                throw new Error("Не удалось инициализировать просмотр по территории")
+            })
+            
+            tusksChain = tusk
+
+            tusk.then(() => {
+                this._map.viewTerritories([...this._browsedTerritories])
+            })
+        }
+
+        if (user instanceof Guest || user instanceof Registrant) {
+            const tusk = tusksChain.catch(async () => {
+                const browsedTerritory = this.findUserTerritory()
+                if (await this.browseRegion(await browsedTerritory)) return true
+                if (await this.browseCountry(await browsedTerritory)) return true
+                throw new Error("Не удалось инициализировать просмотр по местоположению пользователя")
+            })
+
+            tusksChain = tusk
+
+            tusk.then(() => {
+                this._map.viewTerritories([...this._browsedTerritories])
+            })
+        }
+
+        tusksChain.catch(() => {
+            const restoredMapState = this.restoreMapState()
+            if (restoredMapState.center) map.setCenter(restoredMapState.center)
+            if (restoredMapState.zoom) map.setZoom(restoredMapState.zoom)
+        })
+    }
+
+    public async browseGeoTerritories(geoTerritories: GeoTerritory[], groupName: string): Promise<void> {
+        try {
+            // регионы выключаем
+            const regionsFilters = [...document.querySelectorAll<HTMLInputElement>(`[data-type="regions"]`)]
+            regionsFilters.map((element) => { element.checked = false })
+
+            // страны выключаем
+            const countriesFilters = [...document.querySelectorAll<HTMLInputElement>(`[data-type="countries"]`)]
+            countriesFilters.map((element) => { element.checked = false })
+
+            for (const geoTerritory of geoTerritories) {
+                const countryInfo = await this.loadCountryInfo(geoTerritory.countryIso3166)
+                const regionInfo = geoTerritory.regionIso3166
+                    ? await this.loadRegionInfo(geoTerritory.countryIso3166, geoTerritory.regionIso3166)
+                    : null
+
+                // целевой регион включаем
+                if (regionInfo) {
+                    const targetRegionFilter = document.querySelector<HTMLInputElement>(`[name="filter[regions][${regionInfo.id}]"]`) || null
+                    if (targetRegionFilter) targetRegionFilter.checked = true
+                }
+
+                // целевую страну включаем
+                if (countryInfo) {
+                    const targetCountryFilter = document.querySelector<HTMLInputElement>(`[name="filter[countries][${countryInfo.code}]"]`) || null
+                    if (targetCountryFilter) targetCountryFilter.checked = true
+                }
+            }
+
+            // применить фильтры
+            document.querySelector<HTMLAnchorElement>('.apply-filter').click()
+        } catch (error) {
+            console.warn(error)
+        }
+
+
+        try {
+            // ########################################################
+            // Заполняем кнопку закрытия зоны и показываем
+            $('.autoSelectedRegion > span').text(groupName)
+            $('.autoSelectedRegion').show()
+            document.querySelector<HTMLElement>('.autoSelectedRegion').addEventListener("click", (event) => {
+                $(event.currentTarget).hide()
+
+                this.cancelBrowseGeoTerritories(geoTerritories)
+            })
+        } catch (error) {
+            console.warn(error)
+        }
+
+
+        // ########################################################
+        
+        for (const geoTerritory of geoTerritories) {
+            this._map.addGeoTerrirory(geoTerritory)
+
+            this._browsedTerritories.add(geoTerritory)
+        }
+    }
+
+    public async cancelBrowseGeoTerritories(geoTerritories: GeoTerritory[]): Promise<void> {
+        try {
+            // регионы включаем
+            const regionsFilters = [...document.querySelectorAll<HTMLInputElement>(`[data-type="regions"]`)]
+            regionsFilters.map((element) => { element.checked = true })
+
+            // страны включаем
+            const countriesFilters = [...document.querySelectorAll<HTMLInputElement>(`[data-type="countries"]`)]
+            countriesFilters.map((element) => { element.checked = true })
+
+            // применить фильтры
+            document.querySelector<HTMLAnchorElement>('.apply-filter').click()
+        } catch (error) {
+            console.warn(error)
+        }
+
+        for (const geoTerritory of geoTerritories) {
+            this._map.removeGeoTerritory(geoTerritory)
+            
+            this._browsedTerritories.delete(geoTerritory)
+        }
     }
 
     public async browseObjectsFromObjectManager(manager: IObjectManager | IObjectManager & IFolderItemsManager) {
@@ -143,6 +257,107 @@ export class Browser {
         this.restrictedObjectManagerToListener.delete(manager)
     }
 
+    private restoreBrowsedTerritory(): GeoTerritory | null {
+        if (!app.getUrlParameter('territory')) return null
+
+        const countryIso3166: "RU" | "UA" | "BY" | "KZ" | undefined = app.getUrlParameter('territory').split(',')[0]
+
+        const regionIso3166: string | undefined = app.getUrlParameter('territory').split(',')[1]
+
+        if (countryIso3166 && GeoTerritory.checkIsCountryIsoAllowed(countryIso3166)) {
+            return new GeoTerritory(countryIso3166, regionIso3166)
+        }
+
+        return null
+    }
+
+    private async findUserTerritory(): Promise<GeoTerritory | null> {
+        const countryIso3166 = await this._user.countryIso3166
+        const regionIso3166 = await this._user.regionIso3166
+
+        if (countryIso3166 && GeoTerritory.checkIsCountryIsoAllowed(countryIso3166)) {
+            return new GeoTerritory(countryIso3166, regionIso3166)
+        }
+        return null
+    }
+
+    private async browseRegion(territory: GeoTerritory): Promise<boolean> {
+        if (territory.countryIso3166 !== 'RU') return false
+        if (!territory.regionIso3166) return false
+
+        const { territories, mainTerritory } = this.normalizeRegion(territory)
+        
+        await this.browseGeoTerritories(territories, await mainTerritory.name)
+
+        return true
+    }
+
+    private normalizeRegion(passedTerritory: GeoTerritory): { territories: GeoTerritory[], mainTerritory: GeoTerritory } {
+        const geoTerritoryToCountry = new Map<string, "RU" | "UA" | "BY" | "KZ">([
+            ["RU-SPE", "RU"],
+            ["RU-LEN", "RU"],
+            ["RU-MOW", "RU"],
+            ["RU-MOS", "RU"],
+            ["UA-40", "UA"],
+            ["UA-43", "UA"]
+        ])
+
+        const cityTerritoryToRegion = new Map<string, string>([
+            ["RU-SPE", "RU-LEN"],
+            ["RU-MOW", "RU-MOS"],
+            ["UA-40", "UA-43"]
+        ])
+
+        let mainTerritory = passedTerritory
+
+        const territories: GeoTerritory[] = [passedTerritory]
+
+        // Если территория пользователя - федеральный город (https://en.wikipedia.org/wiki/Federal_cities_of_Russia)
+        if (cityTerritoryToRegion.has(passedTerritory.regionIso3166)) {
+            // ищем регион этого города
+            const regionIso = cityTerritoryToRegion.get(passedTerritory.regionIso3166)
+            const regionCountryIso = geoTerritoryToCountry.get(regionIso)
+            const region = new GeoTerritory(regionCountryIso, regionIso)
+
+            // Добавляем в территории региона территорию самого региона (раньше была только территория федерального города)
+            territories.push(region)
+
+            // И регион это основная территория, в отличие от города
+            mainTerritory = region
+        }
+
+        const regionToCityTerritory = new Map(
+            [...cityTerritoryToRegion].map(([city, region]) => [region, city])
+        )
+
+        // Если регион пользователя содержит федеральный город, то складываем их территории (https://en.wikipedia.org/wiki/Federal_cities_of_Russia)
+        if (regionToCityTerritory.has(passedTerritory.regionIso3166)) {
+            const cityIso = regionToCityTerritory.get(passedTerritory.regionIso3166)
+            const cityCountryIso = geoTerritoryToCountry.get(cityIso)
+            const city = new GeoTerritory(cityCountryIso, cityIso)
+
+            territories.push(city)
+        }
+
+        return { territories, mainTerritory }
+    }
+
+    private async browseCountry(territory: GeoTerritory): Promise<boolean> {
+        await this.browseGeoTerritories([territory], await territory.name)
+
+        return true
+    }
+
+    private addViewedObject(id: string) {
+        if (this.viewedObjectsDump.includes(id)) return
+
+        const objects = this.viewedObjectsDump
+        objects.push(id)
+        this.viewedObjectsDump = objects
+
+        ++this.countOfViewedRestrictedObjects
+    }
+
     private async blockForFreeUserWithRestrictions(user: FreeUserWithRestrictions): Promise<void> {
         this.countOfViewedRestrictedObjects = this.limitOfProjectViews + 1
 
@@ -183,8 +398,6 @@ export class Browser {
         }
     }
 
-    private async initForSubscriber(user: Subscriber) { }
-
     private restoreMapState(): { center?: [number, number], zoom?: number } {
         const state = this.loadMapState()
 
@@ -221,14 +434,11 @@ export class Browser {
         return globalThis._folders.some(folder => folder.projects.includes(+targetObject.id))
     }
 
-    _countriesInfo: Promise<TCountryInfo[]> | Promise<null> | undefined
-    getInvestProjectCountriesInfo(): Promise<TCountryInfo[]> | Promise<null> {
-        if (this._countriesInfo !== undefined) return this._countriesInfo
-
-        return this._countriesInfo = new Promise((resolve) => {
+    private async loadCountryInfo(countryIso3166: string): Promise<TCountryInfo | null> {
+        return new Promise<TCountryInfo | null>((resolve) => {
             $.ajax({
                 type: 'POST',
-                url: `/ajax/ymaps/countries`,
+                url: `/ajax/ymaps/country-by-iso3166-alpha2?iso=${countryIso3166}`,
                 success(response) {
                     resolve(JSON.parse(response).data)
                 },
@@ -240,14 +450,11 @@ export class Browser {
         })
     }
 
-    _subjectsInfo: Map<string, Promise<TCountrySubjectInfo[]> | Promise<null> | undefined> = new Map()
-    getInvestProjectCountrySubjectsInfoByCountryIso(iso3166?: string): Promise<TCountrySubjectInfo[]> | Promise<null> {
-        if (this._subjectsInfo.has(iso3166)) return this._subjectsInfo.get(iso3166)
-
-        this._subjectsInfo.set(iso3166, new Promise((resolve) => {
+    private async loadRegionInfo(countryIso3166: string, regionIso3166: string): Promise<TRegionInfo | null> {
+        return new Promise<TRegionInfo | null>((resolve) => {
             $.ajax({
                 type: 'POST',
-                url: `/ajax/ymaps/countries${iso3166}`,
+                url: `/ajax/ymaps/region-by-iso3166-alpha2?countryIso=${countryIso3166}&regionIso=${regionIso3166}`,
                 success(response) {
                     resolve(JSON.parse(response).data)
                 },
@@ -256,117 +463,6 @@ export class Browser {
                     resolve(null)
                 }
             })
-        }))
-
-        return this._subjectsInfo.get(iso3166)
-    }
-
-    async getGeoTerritoryFiltersByIso(countryIso3166: string, subjectIso3166?: string): Promise<Element[] | null> {
-        const countries = await this.getInvestProjectCountriesInfo()
-
-        if (countries === null) return null
-
-        const targetCountry = countries.find(countryInfo => countryInfo.iso3166 === countryIso3166)
-
-        if (targetCountry === undefined) return null
-
-        const countrySubjects = await this.getInvestProjectCountrySubjectsInfoByCountryIso(countryIso3166)
-
-        const targetSubject = countrySubjects && countrySubjects.find(subjectInfo => subjectInfo.iso3166 === subjectIso3166)
-
-        let filters = [...document.querySelector(`name="filter[countries][${targetCountry.id}]"`)]
-        if (targetSubject) filters.push(...document.querySelector(`name="filter[regions][${targetSubject.id}]"`))
-
-        return filters
-    }
-
-    getFiltersBranchByFilter(filter: HTMLElement): HTMLElement[] {
-
-    }
-
-    public browseGeoTerritory(geoTerritory: GeoTerritory): void {
-        // ########################################################
-        // 1. update filters
-
-        // Ищем фильтр
-        
-        const provinceInput = $(`.custom-control-description:contains(${country.name})`).closest('label').find('input')
-
-        // И устанавливаем ему и всем родительским checked: true
-        $(`[data-type="${provinceInput.data('type')}"]`).prop('checked', false)
-
-        provinceInput.prop('checked', true)
-        if (provinceNameRu == 'Ленинградская область') {
-            $('[name="filter[regions][59]"]').prop('checked', true)
-        }
-        if (provinceNameRu == 'Санкт-Петербург') {
-            $('[name="filter[regions][37]"]').prop('checked', true)
-        }
-        if (provinceNameRu == 'Московская область') {
-            $('[name="filter[regions][42]"]').prop('checked', true)
-        }
-        if (provinceNameRu == 'Москва') {
-            $('[name="filter[regions][43]"]').prop('checked', true)
-        }
-        // ...
-
-
-        // ########################################################
-        // 1.2. filter browser objects by feathure.o === region.id
-
-        let checked = []
-        $('input[data-type="regions"]:checked').each(function () {
-            checked.push($(this).data('item_id'))
-        })
-
-        objectManager.setFilter(function (elem) {
-            return checked.indexOf(+elem.o) != -1 ? true : false
-        })
-
-        // ...
-
-        // ########################################################
-        // 1.3 update filters
-        $('[data-type="' + provinceInput.data('type') + '"]').trigger('change')
-
-
-        // ########################################################
-        // 2.1 visualize territoryControls
-
-        // Заполняем кнопку закрытия зоны
-        $('.autoSelectedRegion > span').text(country.name)
-
-        // показываем
-        $('.autoSelectedRegion').show()
-
-
-        // ########################################################
-        // 2.2 visualize territory
-
-        this._map.addObjectsManager(geoTerritory)
-
-        myBorders.then(function (result) {
-            borders_onMap = ymaps.geoQuery(result)
-
-            let region = borders_onMap.search('properties.name = "' + provinceNameRu + '"')
-
-            region.addToMap(map)
-
-            if (lat > 0 && lon > 0) moveMapToRegion(lat, lon)
-            else moveMapToRegion(...app.cookieCoords.split(','))
-
-            if (provinceNameRu == 'Ленинградская область') {
-                borders_onMap.search('properties.name = "Санкт-Петербург"').addToMap(map)
-            }
-            if (provinceNameRu == 'Санкт-Петербург') {
-                borders_onMap.search('properties.name = "Ленинградская область"').addToMap(map)
-            }
-            if (provinceNameRu == 'Московская область') {
-                borders_onMap.search('properties.name = "Москва"').addToMap(map)
-            }
-            if (provinceNameRu == 'Москва') {
-                borders_onMap.search('properties.name = "Московская область"').addToMap(map)
-            }
         })
     }
 }
