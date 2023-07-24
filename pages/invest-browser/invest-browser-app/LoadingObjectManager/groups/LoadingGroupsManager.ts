@@ -62,6 +62,27 @@ export class LoadingGroupsManager extends ClustererLoadingObjectManager {
         this.attachGroupsDataLoader()
     }
 
+    protected _allObjects?: Promise<GroupFeathure | null>
+    public getAllObjects() {
+        if (this._allObjects) return this._allObjects
+
+        return this._allObjects = new Promise<GroupFeathure | null>((resolve) => {
+            $.ajax({
+                url: '/ajax/ymaps/load-all-project-groups',
+                type: "GET",
+                success: (response) => {
+                    const feathures = JSON.parse(response).data.features
+                    resolve(feathures)
+                },
+                error: (error) => {
+                    console.warn(error)
+
+                    resolve(null)
+                }
+            })
+        })
+    }
+
     protected async attachGroupsDataLoader() {
         const placemarksDecorator = await this._placemarksDecorator
         placemarksDecorator.addFocusFistener(async (feathure) => {
@@ -119,7 +140,7 @@ export class LoadingGroupsManager extends ClustererLoadingObjectManager {
     protected async loadGroupData(feathure: GroupFeathure): Promise<{ name: string, name_en: string, description: string } | JQuery.jqXHR<any>> {
         return new Promise((resolve, reject) => {
             $.ajax({
-                type: 'POST',
+                type: 'GET',
                 url: `/ajax/ymaps/group?id=${feathure.id}`,
                 success(response) { resolve(JSON.parse(response).data) },
                 error(error, errorName, ) { reject(error) }

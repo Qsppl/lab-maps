@@ -72,11 +72,11 @@ export class Browser {
     private readonly _browsedTerritories: Set<GeoTerritory> = new Set()
 
     public get countOfViewedRestrictedObjects(): number {
-        return +localStorage.getItem('gsp')
+        return +localStorage.getItem('countOfViewedRestrictedObjects')
     }
 
     public set countOfViewedRestrictedObjects(value: number) {
-        localStorage.setItem('gsp', String(value))
+        localStorage.setItem('countOfViewedRestrictedObjects', String(value))
     }
 
     constructor(map: IMap, userInterface: IUserInterface, user: Guest | Registrant | Subscriber) {
@@ -371,7 +371,7 @@ export class Browser {
         // иначе блокируем пользователя и актуализируем его статус
         const investProjectIdentitiy = await user.investProjectIdentity
         return new Promise((resolve, reject) => {
-            $.post('/ajax/ymaps/set-map-block', { fpOurId: investProjectIdentitiy })
+            $.get(`/ajax/ymaps/set-map-block?fpOurId=${investProjectIdentitiy}`)
                 .done(() => {
                     user.isSpentDailyLimit = true
                     resolve()
@@ -437,7 +437,7 @@ export class Browser {
     private async loadCountryInfo(countryIso3166: string): Promise<TCountryInfo | null> {
         return new Promise<TCountryInfo | null>((resolve) => {
             $.ajax({
-                type: 'POST',
+                type: 'GET',
                 url: `/ajax/ymaps/country-by-iso3166-alpha2?iso=${countryIso3166}`,
                 success(response) {
                     resolve(JSON.parse(response).data)
@@ -453,7 +453,7 @@ export class Browser {
     private async loadRegionInfo(countryIso3166: string, regionIso3166: string): Promise<TRegionInfo | null> {
         return new Promise<TRegionInfo | null>((resolve) => {
             $.ajax({
-                type: 'POST',
+                type: 'GET',
                 url: `/ajax/ymaps/region-by-iso3166-alpha2?countryIso=${countryIso3166}&regionIso=${regionIso3166}`,
                 success(response) {
                     resolve(JSON.parse(response).data)

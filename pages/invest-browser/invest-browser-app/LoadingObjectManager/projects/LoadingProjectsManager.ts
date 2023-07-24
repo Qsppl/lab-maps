@@ -51,11 +51,43 @@ type LoadingObjectManager = ymaps.LoadingObjectManager<
 >
 
 export class LoadingProjectsManager extends ClustererLoadingObjectManager implements IFolderItemsManager {
+    protected _checkIsFolderItemHook
+
     public readonly hasFolderItems: true
 
     public readonly _loadingManager: Promise<LoadingObjectManager>
 
-    protected _checkIsFolderItemHook
+    protected _allObjects?: Promise<ProjectFeathure | null>
+
+    public onLoadProject: (feathure: ProjectFeathure) => void = () => { }
+
+    constructor(urlTemplate: string, languageLocale: "ru" | "en") {
+        super(urlTemplate, languageLocale)
+        this._loadingManager.then(loadingManager => loadingManager.objects.events.add("add", (event: ymaps.IEvent<MouseEvent>) => {
+            const targetObject = event.get("child")
+            targetObject && this.onLoadProject(targetObject)
+        }))
+    }
+
+    public getAllObjects() {
+        if (this._allObjects) return this._allObjects
+
+        return this._allObjects = new Promise<ProjectFeathure | null>((resolve) => {
+            $.ajax({
+                url: '/ajax/ymaps/load-all-projects',
+                type: "GET",
+                success: (response) => {
+                    const feathures = JSON.parse(response).data.features
+                    resolve(feathures)
+                },
+                error: (error) => {
+                    console.warn(error)
+
+                    resolve(null)
+                }
+            })
+        })
+    }
 
     public set checkIsFolderItemHook(f: (feathure: ymaps.geometry.json.IFeatureJson<any, any, any>) => boolean) {
         this._checkIsFolderItemHook = f
@@ -64,14 +96,6 @@ export class LoadingProjectsManager extends ClustererLoadingObjectManager implem
 
     public get checkIsFolderItemHook() {
         return this._checkIsFolderItemHook
-    }
-
-    constructor(urlTemplate: string, languageLocale: "ru" | "en") {
-        super(urlTemplate, languageLocale)
-        this._loadingManager.then(loadingManager => loadingManager.objects.events.add("add", (event: ymaps.IEvent<MouseEvent>) => {
-            const targetObject = event.get("child")
-            targetObject && this.onLoadProject(targetObject)
-        }))
     }
 
     protected objectIsFolderItem(feathure: ymaps.geometry.json.IFeatureJson<any, any, any>) {
@@ -91,6 +115,4 @@ export class LoadingProjectsManager extends ClustererLoadingObjectManager implem
         const loadingManager = await this._loadingManager
         return new ProjectPlacemarksDecorator(loadingManager.objects)
     }
-
-    public onLoadProject: (feathure: ProjectFeathure) => void = () => { }
 }

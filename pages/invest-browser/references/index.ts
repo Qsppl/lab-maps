@@ -19,7 +19,7 @@ let borders_onMap = null
 let quantityTotal = 1
 let getProjectsData = null
 let getCompanyData = null
-let selectedFoldersProjects: JQuery<HTMLElement>[] = []
+let selectedFoldersProjects: string[] = []
 /** Папки > `true` если "Проекты из выбранных папок > `Отображать`", иначе `false`. Дубликат {@link excludeFolders} */
 let onlyFolders = true
 /** Папки > `true` если "Проекты из выбранных папок > `Скрывать`", иначе `false`. Дубликат {@link onlyFolders} */
@@ -419,7 +419,7 @@ $(document).ready(function () {
     }).on('click', '.add-to-folder-ok', function () {
         let folder = $('[name=folders]:checked').val()
         $.ajax({
-            method: 'POST',
+            method: 'GET',
             url: app.en_prefix + '/ajax/projects/add_to_folder',
             data: {
                 projects: [globalThis.folder_project],
@@ -609,7 +609,7 @@ $(document).ready(function () {
                     moveMapToCenter()
                     map.regionChanged = false
                 } else if (regions.length === 1) {
-                    $.post('/ajax/ymaps/get-region-coordinates', { region: regions[0] })
+                    $.get('/ajax/ymaps/get-region-coordinates', { region: regions[0] })
                         .done(function (res) {
                             res = JSON.parse(res).data
                             moveMapToRegion(res.map_x, res.map_y)
@@ -1868,11 +1868,8 @@ function totalSummRecount(download = false) {
 }
 
 function filtrate(elem) {
-    // неизвестный фильтр 1
+    // если регион неизвестен, не фильтруем объект
     if (elem.o == 100) return false
-
-    // неизвестный фильтр 2
-    if (isGuest) return true
 
     let result
     let isOk = true
@@ -2250,7 +2247,7 @@ function showGuestWnd() {
     }
 
     if (isFpOK) {
-        $.post('/ajax/ymaps/set-map-block', { fpOurId: fpOurId })
+        $.get('/ajax/ymaps/set-map-block', { fpOurId: fpOurId })
             .done(function (res) {
                 res = JSON.parse(res).data
                 fpOurId = res.userFpId
@@ -2371,7 +2368,7 @@ function findProductsQuery() {
 
     if (!circles || !gotOne) return
     appLoadScreen.loading()
-    $.post('/ajax/ymaps/products', { circles })
+    $.get('/ajax/ymaps/products', { circles })
         .done(function (answer) {
             const circles = JSON.parse(answer).data
 

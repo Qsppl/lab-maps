@@ -40,9 +40,9 @@ async function main() {
     /** Основной компонент, управляет UserInterface, и YandexMapAdapter */
     const investBrowser = new Browser(mapAdapter, userInterface, user)
 
-    // "/ymap/load-projects?bounds=%b"
+    // "/ymap/load-projects-by-area?bounds=%b"
     const loadingProjectsManager = new LoadingProjectsManager("/pages/invest-browser/ambiance/jsonp-projects.js", user.languageLocale)
-    // "/ymap/load-project-groups?bounds=%b"
+    // "/ymap/load-project-groups-by-area?bounds=%b"
     const loadingGroupsManager = new LoadingGroupsManager("/pages/invest-browser/ambiance/jsonp-load-project-groups.js", user.languageLocale)
 
     investBrowser.browseObjectsFromObjectManager(loadingProjectsManager)
