@@ -5,5 +5,5 @@
     "moduleResolution": "classic",
     "newLine": "crlf"
   },
-  "exclude": ["node_modules/**/*"]
+  "exclude": ["node_modules/**/*", "pages/invest-browser/ambiance/**", "pages/invest-browser/references/**", "dist"]
 }
