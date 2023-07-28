@@ -11,7 +11,7 @@ export type ClusterCollectionOptions = ymaps.objectManager.ClusterCollectionOpti
     SelectableObjectJsonOptions,
     ymaps.ClusterPlacemarkOptions
 >
-type ClusterCollection<
+export type ClusterCollection<
     TCluster extends SelectableClusterJson
 > = ymaps.objectManager.ClusterCollection<
     SelectableObjectJsonOptions,

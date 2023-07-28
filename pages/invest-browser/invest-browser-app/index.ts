@@ -41,12 +41,12 @@ async function main() {
     const investBrowser = new Browser(mapAdapter, userInterface, user)
 
     // "/ymap/load-projects-by-area?bounds=%b"
-    const loadingProjectsManager = new LoadingProjectsManager("/pages/invest-browser/ambiance/jsonp-projects.js", user.languageLocale)
+    const loadingProjectsManager = new LoadingProjectsManager("/pages/invest-browser/ambiance/jsonp-one-cluster-of-projects.js", user.languageLocale)
     // "/ymap/load-project-groups-by-area?bounds=%b"
-    const loadingGroupsManager = new LoadingGroupsManager("/pages/invest-browser/ambiance/jsonp-load-project-groups.js", user.languageLocale)
+    // const loadingGroupsManager = new LoadingGroupsManager("/pages/invest-browser/ambiance/jsonp-load-project-groups.js", user.languageLocale)
 
     investBrowser.browseObjectsFromObjectManager(loadingProjectsManager)
-    investBrowser.browseObjectsFromObjectManager(loadingGroupsManager)
+    // investBrowser.browseObjectsFromObjectManager(loadingGroupsManager)
 
     return {
         user,
@@ -54,7 +54,7 @@ async function main() {
         userInterface,
         investBrowser,
         loadingProjectsManager,
-        loadingGroupsManager
+        // loadingGroupsManager
     }
 }
 

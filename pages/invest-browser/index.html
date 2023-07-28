@@ -28,7 +28,15 @@
 </head>
 
 <body>
-    <div id="map" style="aspect-ratio: 16/9;max-height: 90vh;"></div>
+    <div style="display: flex; height: 100vh;">
+        <div id="map" style="aspect-ratio: 16/9;max-height: 90vh;"></div>
+        <div style="flex-grow: 1;">
+            <ul style="height: 45vh; overflow-y: scroll;padding-left: 1em;" data-component="projects-list">
+            </ul>
+            <ul style="height: 45vh; overflow-y: scroll;padding-left: 1em;" data-component="clusters-list">
+            </ul>
+        </div>
+    </div>
 
     <div id="no-access" style="display: none;">Я ЗАПРЕЩАЮ</div>
 
