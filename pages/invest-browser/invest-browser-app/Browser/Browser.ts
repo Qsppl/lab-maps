@@ -372,7 +372,7 @@ export class Browser {
 
         await app.querySelectorPromise('#no-access-guest-map')
         // показываем пользователю сообщение о том что у него ограничение стоит
-        $('#no-access-guest-map').modal({ keyboard: false, backdrop: 'static' })
+        // $('#no-access-guest-map').modal({ keyboard: false, backdrop: 'static' })
 
         // если у пользователя указано что он потратил лимит, то все готово
         if (await user.isSpentDailyLimit) return

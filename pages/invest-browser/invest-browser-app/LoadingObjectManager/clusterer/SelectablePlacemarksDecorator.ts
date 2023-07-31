@@ -6,7 +6,7 @@ import { ObjectOptionsAssetKey, ObjectOptionsModifierKey, SelectableCollectionDe
 const ymaps = globalThis.ymaps
 
 export type PlacemarkCollectionOptions = ymaps.objectManager.ObjectCollectionOptions<SelectableObjectJsonOptions, ymaps.PlacemarkOptions>
-type PlacemarkCollection = ymaps.objectManager.ObjectCollection<SelectableObjectJsonOptions, SelectablePlacemarkJson, ymaps.PlacemarkOptions>
+export type PlacemarkCollection = ymaps.objectManager.ObjectCollection<SelectableObjectJsonOptions, SelectablePlacemarkJson, ymaps.PlacemarkOptions>
 
 export class SelectablePlacemarksDecorator extends SelectableCollectionDecorator<SelectablePlacemarkJson, PlacemarkCollection> {
     protected async getDefaultAsset(): Promise<PlacemarkCollectionOptions> {

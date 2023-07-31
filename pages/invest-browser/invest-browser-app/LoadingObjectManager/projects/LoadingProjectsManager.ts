@@ -1,9 +1,11 @@
 "use strict"
 
+import { objectManager } from "yandex-maps"
 import { IFolderItemsManager } from "../../Browser/interfaces/IFolderItemsManager.js"
 import { ClustererLoadingObjectManager, SelectableClusterJson, SelectableClusterJsonOptions, SelectableObjectJsonOptions, SelectablePlacemarkJson } from "../clusterer/ClustererLoadingObjectManager.js"
-import { SelectableClustersDecorator } from "../clusterer/SelectableClustersDecorator.js"
+import { ClusterCollection, SelectableClustersDecorator } from "../clusterer/SelectableClustersDecorator.js"
 import { ProjectPlacemarksDecorator } from "./ProjectPlacemarksDecorator.js"
+import { ProjectClustersDecorator } from "./ProjectClustersDecorator.js"
 
 const ymaps = globalThis.ymaps
 
@@ -37,6 +39,8 @@ export type ProjectFeathure = SelectablePlacemarkJson<ProjectObjectJsonOptions &
     iz: number | null
 }
 
+export type ProjectsClusterJson = SelectableClusterJson<ProjectFeathure>
+
 type LoadingObjectManager = ymaps.LoadingObjectManager<
     // Все объекты карты в итоге отображаются как GeoObject'ы, при генерации учитываются соответствующие опции (Placemark Polyline Polygon Circle Rectangle)
     SelectableObjectJsonOptions & ProjectObjectJsonOptions,
@@ -49,6 +53,8 @@ type LoadingObjectManager = ymaps.LoadingObjectManager<
     SelectableClusterJsonOptions,
     SelectableClusterJson<ProjectFeathure>
 >
+
+export type ProjectClustersCollection = ClusterCollection<ProjectsClusterJson>
 
 export class LoadingProjectsManager extends ClustererLoadingObjectManager implements IFolderItemsManager {
     protected _checkIsFolderItemHook
@@ -114,5 +120,10 @@ export class LoadingProjectsManager extends ClustererLoadingObjectManager implem
     protected async decoratePlacemarks() {
         const loadingManager = await this._loadingManager
         return new ProjectPlacemarksDecorator(loadingManager.objects)
+    }
+
+    protected async decorateClusters() {
+        const loadingManager = await this._loadingManager
+        return new ProjectClustersDecorator(loadingManager.clusters)
     }
 }
