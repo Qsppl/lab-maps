@@ -1,5 +1,6 @@
 "use strict"
 
+import readUrlParamsData from "../../../../modules/read-url-params-data.js"
 import mitt from "/node_modules/mitt/dist/mitt.mjs"
 import { GeoTerritory } from "../GeoTerritory/GeoTerritory.js"
 import { LoadingProjectsManager } from "../LoadingObjectManager/projects/LoadingProjectsManager.js"
@@ -13,6 +14,14 @@ import { IMap } from "./interfaces/IMap.js"
 import { IObjectManager } from "./interfaces/IObjectManager.js"
 import { IUser } from "./interfaces/IUser.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"
+
+type UrlParamsDTO = {
+    territory?: ["RU" | "UA" | "BY" | "KZ", string | undefined],
+    cenrter?: [number, number],
+    zoom?: number,
+    x?: number,
+    y?: number
+}
 
 type TCountryInfo = {
     id: number
@@ -269,17 +278,17 @@ export class Browser {
     }
 
     private restoreBrowsedTerritory(): GeoTerritory | null {
-        if (!app.getUrlParameter('territory')) return null
+        const urlParamsData = readUrlParamsData<UrlParamsDTO>()
 
-        const countryIso3166: "RU" | "UA" | "BY" | "KZ" | undefined = app.getUrlParameter('territory').split(',')[0]
+        const countryIso3166: "RU" | "UA" | "BY" | "KZ" | undefined = urlParamsData.territory?.[0]
 
-        const regionIso3166: string | undefined = app.getUrlParameter('territory').split(',')[1]
+        if (!countryIso3166) return null
 
-        if (countryIso3166 && GeoTerritory.checkIsCountryIsoAllowed(countryIso3166)) {
-            return new GeoTerritory(countryIso3166, regionIso3166)
-        }
+        const regionIso3166: string | undefined = urlParamsData.territory?.[1]
 
-        return null
+        if (!GeoTerritory.checkIsCountryIsoAllowed(countryIso3166)) return null
+
+        return new GeoTerritory(countryIso3166, regionIso3166)
     }
 
     private async findUserTerritory(): Promise<GeoTerritory | null> {
@@ -415,8 +424,9 @@ export class Browser {
         // if guest, then we skip loading the parameter url
         if (this._user instanceof Guest) return state
 
-        if (app.getUrlParameter('center')) state.center = app.getUrlParameter('center').split(',').map((value: string) => +value)
-        if (app.getUrlParameter('zoom')) state.zoom = +(app.getUrlParameter('zoom'))
+        const urlParamsData = readUrlParamsData<UrlParamsDTO>()
+        if (urlParamsData.cenrter) state.center = urlParamsData.cenrter
+        if (urlParamsData.zoom) state.zoom = urlParamsData.zoom
 
         return state
     }
@@ -428,9 +438,8 @@ export class Browser {
 
         if (this._user instanceof Guest) return {}
 
-        if (app.getUrlParameter('x') && app.getUrlParameter('y')) {
-            return { center: [+app.getUrlParameter('x'), +app.getUrlParameter('y')], zoom: 11 }
-        }
+        const urlParamsData = readUrlParamsData<UrlParamsDTO>()
+        if (urlParamsData.x && urlParamsData.y) return { center: [urlParamsData.x, urlParamsData.y], zoom: 11 }
 
         if (globalThis.companyProdAddresses) {
             const lastUserCompany = globalThis.companyProdAddresses[globalThis.companyProdAddresses.length - 1]
