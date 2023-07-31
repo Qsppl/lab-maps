@@ -4,6 +4,7 @@ import { IObjectManager } from "../../Browser/interfaces/IObjectManager.js"
 import { IUserFocusEmmiter } from "../../UserInterface/interfaces/IUserFocusEmmiter.js"
 import { SelectableClustersDecorator } from "./SelectableClustersDecorator.js"
 import { SelectablePlacemarksDecorator } from "./SelectablePlacemarksDecorator.js"
+import mitt, { Emitter } from "/node_modules/mitt/index.js"
 
 const ymaps = globalThis.ymaps
 
@@ -56,8 +57,6 @@ export class ClustererLoadingObjectManager implements IObjectManager, IUserFocus
         clusterDisableClickZoom: true
     }
 
-    public readonly _loadingManager: Promise<LoadingObjectManager>
-
     protected readonly _languageLocale: "ru" | "en"
 
     protected readonly _placemarksDecorator: Promise<SelectablePlacemarksDecorator>
@@ -65,6 +64,10 @@ export class ClustererLoadingObjectManager implements IObjectManager, IUserFocus
     protected readonly _clustersDecorator: Promise<SelectableClustersDecorator>
 
     protected readonly _focusListeners: Set<(feathure: SelectablePlacemarkJson) => Promise<boolean>> = new Set()
+
+    public readonly events = mitt<{ "load-object": SelectablePlacemarkJson; "create-cluster": SelectableClusterJson }>()
+
+    public readonly _loadingManager: Promise<LoadingObjectManager>
 
     constructor(urlTemplate: string, languageLocale: "ru" | "en") {
         this._languageLocale = languageLocale
@@ -80,7 +83,7 @@ export class ClustererLoadingObjectManager implements IObjectManager, IUserFocus
     addFocusFistener(f: (feathure: SelectablePlacemarkJson) => Promise<boolean>): void {
         this._focusListeners.add(f)
     }
-    
+
     public deleteFocusFistener(f: (feathure: SelectablePlacemarkJson) => Promise<boolean>): void {
         this._focusListeners.delete(f)
     }

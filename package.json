@@ -5,7 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc-watch": "tsc --watch --project tsconfig.json"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +20,7 @@
     "bootstrap": "^4.6.2",
     "jquery": "^3.6.4",
     "jquery-toast-plugin": "^1.3.2",
+    "mitt": "^3.0.1",
     "unlockjs": "^1.1.17"
   }
 }

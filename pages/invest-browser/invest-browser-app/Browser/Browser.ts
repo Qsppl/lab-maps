@@ -1,5 +1,6 @@
 "use strict"
 
+import mitt from "/node_modules/mitt/dist/mitt.mjs"
 import { GeoTerritory } from "../GeoTerritory/GeoTerritory.js"
 import { LoadingProjectsManager } from "../LoadingObjectManager/projects/LoadingProjectsManager.js"
 import { IUserFocusEmmiter } from "../UserInterface/interfaces/IUserFocusEmmiter.js"
@@ -59,10 +60,14 @@ export class Browser {
 
     private readonly _browsedObjectManagers: Set<IObjectManager> = new Set()
 
+    private readonly events = mitt<{
+        "browse-objects-manager": IObjectManager,
+        "cancel-browse-objects-manager": IObjectManager
+    }>()
+
     private get viewedObjectsDump(): string[] {
-        return localStorage.getItem('IBA-browser-viewedObjects')
-            ? JSON.parse(localStorage.getItem('IBA-browser-viewedObjects'))
-            : []
+        const dump = localStorage.getItem('IBA-browser-viewedObjects')
+        return dump ? JSON.parse(dump) : []
     }
 
     private set viewedObjectsDump(objects: string[]) {
@@ -72,7 +77,7 @@ export class Browser {
     private readonly _browsedTerritories: Set<GeoTerritory> = new Set()
 
     public get countOfViewedRestrictedObjects(): number {
-        return +localStorage.getItem('countOfViewedRestrictedObjects')
+        return +(localStorage.getItem('countOfViewedRestrictedObjects') ?? 0)
     }
 
     public set countOfViewedRestrictedObjects(value: number) {
@@ -128,6 +133,8 @@ export class Browser {
             if (restoredMapState.center) map.setCenter(restoredMapState.center)
             if (restoredMapState.zoom) map.setZoom(restoredMapState.zoom)
         })
+
+        this.inspectBrowsedObjectsByVisibleArea()
     }
 
     public async browseGeoTerritories(geoTerritories: GeoTerritory[], groupName: string): Promise<void> {
@@ -244,6 +251,8 @@ export class Browser {
 
             manager.addFocusFistener(openProjectHandler)
         }
+
+        this.events.emit("browse-objects-manager", manager)
     }
 
     public cancelBrowseObjectsFromObjectManager(manager: IObjectManager) {
@@ -251,10 +260,12 @@ export class Browser {
 
         this._browsedObjectManagers.delete(manager)
 
-        if (!this.restrictedObjectManagerToListener.has(manager)) return
+        if (this.restrictedObjectManagerToListener.has(manager)) {
+            manager.deleteFocusFistener(this.restrictedObjectManagerToListener.get(manager))
+            this.restrictedObjectManagerToListener.delete(manager)
+        }
 
-        manager.deleteFocusFistener(this.restrictedObjectManagerToListener.get(manager))
-        this.restrictedObjectManagerToListener.delete(manager)
+        this.events.emit("cancel-browse-objects-manager", manager)
     }
 
     private restoreBrowsedTerritory(): GeoTerritory | null {
@@ -463,6 +474,12 @@ export class Browser {
                     resolve(null)
                 }
             })
+        })
+    }
+
+    public inspectBrowsedObjectsByVisibleArea() {
+        this.events.on("browse-objects-manager", manager => {
+            manager.eve
         })
     }
 }

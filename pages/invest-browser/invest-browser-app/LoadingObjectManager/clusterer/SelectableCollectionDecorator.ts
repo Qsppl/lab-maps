@@ -1,6 +1,7 @@
 "use strict"
 
 import { IUserFocusEmmiter } from "../../UserInterface/interfaces/IUserFocusEmmiter.js"
+import mitt from "/node_modules/mitt/index.js"
 
 export type ObjectOptionsAssetKey = "default" | "select" | "visited"
 export type ObjectOptionsModifierKey = "normal" | "hover"
@@ -16,6 +17,8 @@ export abstract class SelectableCollectionDecorator<
     protected readonly _focusListeners: Set<(feathure: Feathure) => Promise<boolean>> = new Set()
 
     public readonly ready: Promise<void>
+
+    public readonly events = mitt<{ "load-object": Feathure }>()
 
     constructor(collection: Collection) {
         this._collection = collection

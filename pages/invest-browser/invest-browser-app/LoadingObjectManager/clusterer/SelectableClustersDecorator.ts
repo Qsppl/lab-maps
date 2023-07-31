@@ -2,6 +2,7 @@
 
 import { SelectableClusterJson, SelectableClusterJsonOptions, SelectableObjectJsonOptions, SelectablePlacemarkJson } from "./ClustererLoadingObjectManager.js"
 import { ObjectOptionsAssetKey, ObjectOptionsModifierKey, SelectableCollectionDecorator } from "./SelectableCollectionDecorator.js"
+import mitt from "/node_modules/mitt/index.js"
 
 const ymaps = globalThis.ymaps
 
@@ -64,6 +65,8 @@ export class SelectableClustersDecorator<
             hasHint: false
         }
     }
+
+    public readonly events = mitt<{ "create-cluster": TCluster }>()
 
     constructor(collection: TClusterCollection) {
         super(collection)

@@ -8,8 +8,16 @@ import { LoadingGroupsManager } from "./LoadingObjectManager/groups/LoadingGroup
 import { LoadingProjectsManager } from "./LoadingObjectManager/projects/LoadingProjectsManager.js"
 import { YandexMapAdapter } from "./Map/YandexMapAdapter.js"
 import { UserInterface } from "./UserInterface/UserInterface.js"
+import CheatCode from "/node_modules/unlockjs/src/cheatcode.js"
+import { GOD_MODE } from "/node_modules/unlockjs/src/utils/presets.js"
 
 globalThis.investBrowserAppInitialized = main()
+
+new CheatCode('inspectModeCheat', GOD_MODE, async () => {
+    alert('Cheater!')
+    await globalThis.investBrowserAppInitialized
+    // globalThis.investBrowser
+})
 
 const ymaps = globalThis.ymaps
 

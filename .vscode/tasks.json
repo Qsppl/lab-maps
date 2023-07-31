@@ -2,8 +2,8 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "liveServer - .vscode/settings.json",
             "command": "${command:extension.liveServer.goOnline}",
+            "label": "liveServer - .vscode/settings.json",
             "group": "build",
             "runOptions": {
                 "runOn": "folderOpen"
@@ -30,15 +30,26 @@
                 "showReuseMessage": true,
                 "clear": true
             }
-        },
-        {
-            "type": "typescript",
-            "tsconfig": "tsconfig.build.json",
-            "problemMatcher": [
-                "$tsc"
-            ],
-            "group": "build",
-            "label": "tsc: build - tsconfig.build.json"
         }
+        // {
+        //     "type": "npm",
+        //     "script": "tsc-watch",
+        //     "group": "build",
+        //     "problemMatcher": ["$tsc-watch"],
+        //     "label": "npm: tsc-watch",
+        //     "detail": "tsc --watch --project tsconfig.json",
+        //     "runOptions": {
+        //         "runOn": "folderOpen"
+        //     },
+        //     "presentation": {
+        //         "echo": true,
+        //         "reveal": "never",
+        //         "revealProblems": "never",
+        //         "focus": false,
+        //         "panel": "shared",
+        //         "showReuseMessage": true,
+        //         "clear": true
+        //     }
+        // }
     ]
 }
