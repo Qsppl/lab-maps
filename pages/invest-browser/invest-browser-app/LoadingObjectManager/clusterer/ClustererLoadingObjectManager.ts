@@ -4,7 +4,7 @@ import { IObjectManager } from "../../Browser/interfaces/IObjectManager.js"
 import { IUserFocusEmmiter } from "../../UserInterface/interfaces/IUserFocusEmmiter.js"
 import { SelectableClustersDecorator } from "./SelectableClustersDecorator.js"
 import { SelectablePlacemarksDecorator } from "./SelectablePlacemarksDecorator.js"
-import mitt, { Emitter } from "/node_modules/mitt/index.js"
+import mitt from "/node_modules/mitt/index.js"
 
 const ymaps = globalThis.ymaps
 

@@ -1,0 +1,104 @@
+{
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-standard-pkg"
+      ]
+    ]
+  },
+  "_from": "unlockjs",
+  "_id": "unlockjs@1.1.17",
+  "_inBundle": false,
+  "_integrity": "sha512-ROFvZxRviBiFVwI3HJQeYkMPJ5XakQBsI5RKKMpCmILgBKGw1sCxhzIjQGtThdA90omBrujCP370RKiCgUGa3g==",
+  "_location": "/unlockjs",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "unlockjs",
+    "name": "unlockjs",
+    "escapedName": "unlockjs",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/unlockjs/-/unlockjs-1.1.17.tgz",
+  "_shasum": "e32bba3d4964cecd13343410b52ff294952914c7",
+  "_spec": "unlockjs",
+  "_where": "C:\\OSPanel\\domains\\lab-maps",
+  "author": {
+    "name": "Quangdao Nguyen"
+  },
+  "bugs": {
+    "url": "https://github.com/quangdaon/unlockjs/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {},
+  "deprecated": false,
+  "description": "Use keyboard keys to their fullest potential!",
+  "devDependencies": {
+    "@babel/core": "^7.7.5",
+    "@babel/plugin-proposal-class-properties": "^7.7.4",
+    "@babel/preset-env": "^7.7.6",
+    "@pika/pack": "^0.3.7",
+    "@pika/plugin-standard-pkg": "^0.4.0",
+    "babel-eslint": "^10.0.3",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-istanbul": "^5.2.0",
+    "chai": "^4.2.0",
+    "chai-subset": "^1.6.0",
+    "codacy-coverage": "^3.4.0",
+    "eslint": "^5.16.0",
+    "eslint-loader": "^2.2.1",
+    "jsdoc": "^3.6.3",
+    "karma": "^4.4.1",
+    "karma-chai": "^0.1.0",
+    "karma-chai-subset": "^2.0.1",
+    "karma-coverage": "^2.0.1",
+    "karma-coveralls": "^2.1.0",
+    "karma-firefox-launcher": "^1.2.0",
+    "karma-mocha": "^1.3.0",
+    "karma-sinon": "^1.0.5",
+    "karma-sinon-chai": "^2.0.2",
+    "karma-webpack": "^3.0.5",
+    "mocha": "^5.2.0",
+    "sinon": "^7.5.0",
+    "sinon-chai": "^3.3.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-serve": "^3.2.0",
+    "yargs": "^12.0.5"
+  },
+  "homepage": "https://docs.quangdao.com/unlockjs/",
+  "keywords": [
+    "unlock",
+    "cheats",
+    "cheater",
+    "cheat",
+    "codes",
+    "keyboard",
+    "shortcuts",
+    "hotkeys"
+  ],
+  "license": "MIT",
+  "main": "dist/unlock.js",
+  "module": "src/index.js",
+  "name": "unlockjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quangdaon/unlockjs.git"
+  },
+  "scripts": {
+    "build": "webpack --config ./config/webpack.prod.config.js --progress --hide-modules && pack build",
+    "codacy": "cat ./coverage/report-lcov/lcov.info | codacy-coverage",
+    "dev": "webpack-serve --config ./config/webpack.dev.config.js --content ./demo --log-level info",
+    "docs": "jsdoc -c .jsdoc.json",
+    "test": "karma start ./karma.conf.js --single-run"
+  },
+  "title": "UnlockJS",
+  "version": "1.1.17"
+}

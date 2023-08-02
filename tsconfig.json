@@ -15,7 +15,9 @@
     }
   },
   "exclude": [
-    "pages/invest-browser/ambiance/**",
-    "pages/invest-browser/references/**"
+    "node_modules",
+    "@types",
+    "modules",
+    "references"
   ]
 }

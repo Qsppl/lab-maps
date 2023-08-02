@@ -1,8 +1,8 @@
-# exclude exclude modules except @types/yandex-maps and @types/jquery-toast-plugin
+# exclude all modules except @types/yandex-maps and @types/jquery-toast-plugin
 node_modules/*
 !node_modules/@types/yandex-maps
 !node_modules/@types/jquery-toast-plugin
 
 # exclude compiled files
-*.js
-dist
+**/*.js
+!references/*.js

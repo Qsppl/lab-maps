@@ -11,16 +11,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@selectize/selectize": "^0.15.2",
-    "@types/bootstrap": "^4.5.1",
-    "@types/jquery": "^3.5.16",
-    "@types/jquery-toast-plugin": "^1.3.3",
-    "@types/selectize": "^0.12.35",
-    "@types/yandex-maps": "^2.1.29",
     "bootstrap": "^4.6.2",
     "jquery": "^3.6.4",
     "jquery-toast-plugin": "^1.3.2",
     "mitt": "^3.0.1",
     "unlockjs": "^1.1.17"
+  },
+  "devDependencies": {
+    "@selectize/selectize": "^0.15.2",
+    "@types/bootstrap": "^4.6.2",
+    "@types/jquery": "^3.5.16",
+    "@types/jquery-toast-plugin": "^1.3.3",
+    "@types/selectize": "^0.12.35",
+    "@types/yandex-maps": "^2.1.30"
   }
 }

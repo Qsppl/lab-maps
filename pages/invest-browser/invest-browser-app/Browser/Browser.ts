@@ -1,8 +1,7 @@
 "use strict"
 
-import readUrlParamsData from "../../../../modules/read-url-params-data.js"
 import mitt from "/node_modules/mitt/dist/mitt.mjs"
-import { GeoTerritory } from "../GeoTerritory/GeoTerritory.js"
+import { GeoTerritory } from "../GeoTerritory/GeoTerritory"
 import { LoadingProjectsManager } from "../LoadingObjectManager/projects/LoadingProjectsManager.js"
 import { IUserFocusEmmiter } from "../UserInterface/interfaces/IUserFocusEmmiter.js"
 import { FreeUserWithRestrictions } from "./User/FreeRestrictedUser/FreeUserWithRestrictions.js"
@@ -14,6 +13,7 @@ import { IMap } from "./interfaces/IMap.js"
 import { IObjectManager } from "./interfaces/IObjectManager.js"
 import { IUser } from "./interfaces/IUser.js"
 import { IUserInterface } from "./interfaces/IUserInterface.js"
+import { readUrlParamsData } from "/modules/read-url-params.js"
 
 type UrlParamsDTO = {
     territory?: ["RU" | "UA" | "BY" | "KZ", string | undefined],
